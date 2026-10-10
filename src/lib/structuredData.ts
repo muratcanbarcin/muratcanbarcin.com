@@ -25,6 +25,7 @@ const nodeId = (fragment: string): string => `${siteConfig.url}/#${fragment}`;
 
 const PERSON_ID = nodeId("person");
 const WEBSITE_ID = nodeId("website");
+const PROFILE_PAGE_ID = nodeId("profilepage");
 
 const ownerSurname = profile.name.split(" ").at(-1) ?? profile.name;
 
@@ -102,11 +103,30 @@ function buildWebSite(): JsonLdNode {
   };
 }
 
-/** Pure, build-time graph linking the site owner, their research and the website via `@id`. */
+function buildProfilePage(): JsonLdNode {
+  return {
+    "@type": "ProfilePage",
+    "@id": PROFILE_PAGE_ID,
+    url: siteConfig.url,
+    name: siteConfig.title,
+    description: siteConfig.description,
+    inLanguage: ["en", "tr"],
+    isPartOf: { "@id": WEBSITE_ID, "@type": "WebSite" },
+    mainEntity: { "@id": PERSON_ID, "@type": "Person" },
+    about: { "@id": PERSON_ID, "@type": "Person" },
+  };
+}
+
+/** Pure, build-time graph linking the profile page, its owner, their research and the website via `@id`. */
 export function buildStructuredData(): JsonLdGraph {
   return {
     "@context": "https://schema.org",
-    "@graph": [buildPerson(), ...publications.map(toScholarlyArticle), buildWebSite()],
+    "@graph": [
+      buildProfilePage(),
+      buildPerson(),
+      ...publications.map(toScholarlyArticle),
+      buildWebSite(),
+    ],
   };
 }
 
