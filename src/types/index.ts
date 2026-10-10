@@ -13,3 +13,4 @@ export type * from "./terminal";
 export type * from "./github";
 export type * from "./chat";
 export type * from "./portfolio";
+export type * from "./site";

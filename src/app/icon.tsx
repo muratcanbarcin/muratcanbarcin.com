@@ -1,14 +1,8 @@
 import { ImageResponse } from "next/og";
+import { BRAND_PALETTE as PALETTE } from "@/lib/brand";
 
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
-
-const PALETTE = {
-  background: "#09090b",
-  border: "#27272a",
-  glyph: "#fafafa",
-  accent: "#34d399",
-} as const;
 
 /**
  * `next/og` bundles a single sans-serif face, so the monogram is drawn as stroked glyphs on a
