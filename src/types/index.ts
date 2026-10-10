@@ -11,7 +11,6 @@ export type * from "./contact";
 export type * from "./navigation";
 export type * from "./terminal";
 export type * from "./console";
-export type * from "./github";
 export type * from "./chat";
 export type * from "./portfolio";
 export type * from "./site";

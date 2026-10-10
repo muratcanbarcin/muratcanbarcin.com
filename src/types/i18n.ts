@@ -50,10 +50,9 @@ export interface Dictionary {
     };
     resumeOpening: string;
   };
-  github: {
-    latestPush: string;
-    loading: string;
-    unavailable: string;
+  hero: {
+    /** Short general line under the hero actions. */
+    mark: string;
   };
   filters: {
     label: string;

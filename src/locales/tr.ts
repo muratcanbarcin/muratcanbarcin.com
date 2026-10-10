@@ -53,10 +53,8 @@ export const tr: Dictionary = {
     },
     resumeOpening: "Özgeçmiş talep formu açılıyor…",
   },
-  github: {
-    latestPush: "son push",
-    loading: "son aktivite alınıyor…",
-    unavailable: "aktivite akışı alınamadı — GitHub'ı aç",
+  hero: {
+    mark: "ad astra per aspera",
   },
   filters: {
     label: "Filtrele",

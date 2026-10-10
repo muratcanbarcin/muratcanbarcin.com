@@ -31,7 +31,6 @@ Put keys in `.env.local`. The page still builds without them; the related featur
 | `GOOGLE_GENERATIVE_AI_API_KEY` | MCB.ai chat. Without it, `/api/chat` returns 503. `/` commands still run in the browser. |
 | `RESEND_API_KEY` | Delivers contact-form and resume-request email. Without it, the request is logged and no mail is sent. |
 | `RESEND_FROM_EMAIL` | Sender address. Falls back to Resend's onboarding address when empty. |
-| `GITHUB_TOKEN` | Raises the rate limit for the latest-commit line in the hero. Without it, the public GitHub API is used. |
 
 ## Where content lives
 
@@ -56,6 +55,4 @@ Server routes:
 - `POST /api/chat` — MCB.ai
 - `POST /api/contact` — contact form
 - `POST /api/resume-request` — resume request
-- `GET /api/github-activity` — latest public push
-
 The console has two modes. Input that starts with `/` resolves in the browser. Plain language goes to MCB.ai.

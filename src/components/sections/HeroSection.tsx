@@ -8,7 +8,7 @@ import { UnifiedConsole } from "@/components/console/UnifiedConsole";
 import { AvailabilityBadge } from "@/components/common/AvailabilityBadge";
 import { RequestResumeButton } from "@/components/common/RequestResumeButton";
 import { SocialLinks } from "@/components/common/SocialLinks";
-import { GitHubActivity } from "@/components/common/GitHubActivity";
+import { HeroMark } from "@/components/common/HeroMark";
 import { cn } from "@/lib/utils";
 
 const { profile } = portfolioData;
@@ -74,7 +74,7 @@ export function HeroSection() {
             <SocialLinks className="sm:ml-1" />
           </div>
 
-          <GitHubActivity className="mt-1" />
+          <HeroMark className="mt-1" />
         </div>
 
         <UnifiedConsole className="h-[32rem] sm:h-[34rem]" />

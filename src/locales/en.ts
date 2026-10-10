@@ -53,10 +53,8 @@ export const en: Dictionary = {
     },
     resumeOpening: "Opening the resume request form…",
   },
-  github: {
-    latestPush: "latest push",
-    loading: "fetching latest activity…",
-    unavailable: "activity feed unavailable — open GitHub",
+  hero: {
+    mark: "ad astra per aspera",
   },
   filters: {
     label: "Filter",
