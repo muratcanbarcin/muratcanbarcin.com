@@ -18,7 +18,7 @@ export const publications: readonly Publication[] = [
   {
     id: "c4isr-edge-fusion",
     title: "A Polyglot Microservices Architecture for Real-Time Edge Data Fusion in a Lightweight C4ISR Prototype",
-    authors: ["M. C. Barçin"],
+    authors: ["M. C. Barçin", "Prof. Dr. Semih Utku", "Emirhan Güler", "Sarp Deniz Topaloğlu"],
     journal: "Working manuscript",
     status: { en: "In Preparation", tr: "Hazırlık Aşamasında" },
     abstract: {

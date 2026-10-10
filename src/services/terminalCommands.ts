@@ -6,6 +6,7 @@ import type {
   TerminalEffect,
   TerminalLine,
 } from "@/types";
+import { isProfessionalRole } from "@/data/experiences";
 import { portfolioData } from "@/data/portfolioData";
 import { monthsBetweenInclusive, roundedYearCount } from "@/lib/date";
 import { interpolate, localize } from "@/lib/i18n";
@@ -42,7 +43,7 @@ function formatTenure(
   dictionary: Dictionary,
 ): string {
   const months = experiences.reduce((total, experience) => {
-    if (experience.period.end === "Present") return total;
+    if (!isProfessionalRole(experience) || experience.period.end === "Present") return total;
     return total + (monthsBetweenInclusive(experience.period.start, experience.period.end) ?? 0);
   }, 0);
   const years = roundedYearCount(months);
@@ -100,7 +101,9 @@ const RENDERERS: Record<TerminalCommandName, (context: TerminalContext) => Termi
     const { profile, contact, education, experiences, skills } = portfolioData;
     const { labels } = dictionary.terminal;
     const degree = education[0];
-    const organizations = [...new Set(experiences.map((experience) => experience.company))].join(" · ");
+    const work = experiences.filter(isProfessionalRole);
+    const leadership = experiences.filter((experience) => !isProfessionalRole(experience));
+    const organizations = [...new Set(work.map((experience) => experience.company))].join(" · ");
     const backend = skills.find((group) => group.id === "backend-systems");
     const spoken = profile.languages
       .map((language) => `${localize(language.name, locale)} ${localize(language.level, locale)}`)
@@ -120,8 +123,16 @@ const RENDERERS: Record<TerminalCommandName, (context: TerminalContext) => Termi
         : BLANK_LINE,
       {
         label: labels.experience,
-        text: `${formatTenure(experiences, dictionary)} · ${organizations}`,
+        text: `${formatTenure(work, dictionary)} · ${organizations}`,
       },
+      ...(leadership.length > 0
+        ? [
+            {
+              label: labels.leadership,
+              text: leadership.map((experience) => experience.company).join(" · "),
+            },
+          ]
+        : []),
       {
         label: labels.stack,
         text: (backend?.skills ?? []).slice(0, 6).join(", "),

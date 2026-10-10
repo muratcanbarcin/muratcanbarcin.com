@@ -3,6 +3,7 @@
 import { ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Experience } from "@/types";
+import { careerHighlights, isProfessionalRole } from "@/data/experiences";
 import { portfolioData } from "@/data/portfolioData";
 import { useLocale } from "@/hooks/useLocale";
 import { SectionHeader } from "@/components/common/SectionHeader";
@@ -25,15 +26,8 @@ export function ExperienceSection() {
         titleId="experience-title"
       />
       <ExperienceSummary />
-      <ol className="relative flex flex-col gap-6">
-        <span
-          aria-hidden="true"
-          className="absolute top-3 bottom-3 left-[11px] w-px bg-linear-to-b from-emerald-500/40 via-zinc-800 to-zinc-800"
-        />
-        {experiences.map((experience, index) => (
-          <ExperienceCommit key={experience.id} experience={experience} isHead={index === 0} />
-        ))}
-      </ol>
+      <ExperienceList experiences={experiences.filter(isProfessionalRole)} markHead />
+      <LeadershipList experiences={experiences.filter((experience) => !isProfessionalRole(experience))} />
     </section>
   );
 }
@@ -47,34 +41,71 @@ interface CommitShellProps {
 }
 
 function ExperienceSummary() {
-  const { t } = useLocale();
-  const months = experiences.reduce((total, experience) => {
+  const { t, localize } = useLocale();
+  const work = experiences.filter(isProfessionalRole);
+  const months = work.reduce((total, experience) => {
     if (experience.period.end === "Present") return total;
     return total + (monthsBetweenInclusive(experience.period.start, experience.period.end) ?? 0);
   }, 0);
   const years = roundedYearCount(months);
-  const organizations = new Set(experiences.map((experience) => experience.company)).size;
-  const stats = [
-    {
-      label: t("experience.tenureLabel"),
-      value: t(years === 1 ? "experience.tenureYear" : "experience.tenureYears", { count: years }),
-    },
-    { label: t("experience.rolesLabel"), value: t("experience.rolesCount", { count: experiences.length }) },
-    {
-      label: t("experience.organizationsLabel"),
-      value: t("experience.organizationsCount", { count: organizations }),
-    },
-  ];
+  const companies = [...new Set(work.map((experience) => experience.company))].join(" · ");
 
   return (
-    <dl className="mb-6 grid grid-cols-3 gap-3">
-      {stats.map((stat) => (
-        <div key={stat.label} className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-4 sm:px-5">
-          <dt className="font-mono text-[10px] tracking-wider text-zinc-500 uppercase sm:text-[11px]">{stat.label}</dt>
-          <dd className="mt-1 font-mono text-base font-semibold tracking-tight break-words text-zinc-50 sm:text-xl">{stat.value}</dd>
+    <div className="mb-8 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/40">
+      <div className="flex flex-col gap-3 border-b border-zinc-800/80 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+        <div>
+          <p className="font-mono text-[11px] tracking-wider text-zinc-500 uppercase">{t("experience.tenureLabel")}</p>
+          <p className="mt-1 font-mono text-3xl font-semibold tracking-tight text-zinc-50">
+            {t(years === 1 ? "experience.tenureYear" : "experience.tenureYears", { count: years })}
+          </p>
         </div>
+        <p className="max-w-md text-sm text-zinc-400">{companies}</p>
+      </div>
+      <ul className="grid sm:grid-cols-2 lg:grid-cols-4">
+        {careerHighlights.map((item) => (
+          <li key={item.id} className="flex flex-col gap-1 border-t border-zinc-800/80 px-5 py-4 sm:px-6">
+            <p className="font-mono text-xl font-semibold tracking-tight text-emerald-300">{item.figure}</p>
+            <p className="text-sm text-zinc-200">{localize(item.label)}</p>
+            <p className="font-mono text-[11px] text-zinc-500">{localize(item.context)}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ExperienceList({
+  experiences: items,
+  markHead,
+}: {
+  experiences: readonly Experience[];
+  markHead: boolean;
+}) {
+  return (
+    <ol className="relative flex flex-col gap-6">
+      <span
+        aria-hidden="true"
+        className="absolute top-3 bottom-3 left-[11px] w-px bg-linear-to-b from-emerald-500/40 via-zinc-800 to-zinc-800"
+      />
+      {items.map((experience, index) => (
+        <ExperienceCommit key={experience.id} experience={experience} isHead={markHead && index === 0} />
       ))}
-    </dl>
+    </ol>
+  );
+}
+
+function LeadershipList({ experiences: items }: { experiences: readonly Experience[] }) {
+  const { t } = useLocale();
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-12 flex flex-col gap-5">
+      <div className="flex flex-col gap-1 pl-9">
+        <h3 className="font-mono text-[11px] tracking-wider text-zinc-500 uppercase">{t("experience.leadership")}</h3>
+        <p className="text-sm text-zinc-500">{t("experience.leadershipNote")}</p>
+      </div>
+      <ExperienceList experiences={items} markHead={false} />
+    </div>
   );
 }
 

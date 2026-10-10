@@ -1,4 +1,4 @@
-import type { Experience } from "@/types";
+import type { Experience, LocalizedString } from "@/types";
 
 export const experiences: readonly Experience[] = [
   {
@@ -91,5 +91,43 @@ export const experiences: readonly Experience[] = [
     },
     techStack: [],
     proofs: [{ title: "Ecothon İzmir", url: "https://ecothonizmir.com" }],
+  },
+];
+
+/** Club and community roles stay on the page, outside the employment timeline. */
+export function isProfessionalRole(experience: Experience): boolean {
+  return experience.type !== "Leadership";
+}
+
+/** Figures already stated in the roles and the TEKNOFEST finalist project. */
+export const careerHighlights: readonly {
+  id: string;
+  figure: string;
+  label: LocalizedString;
+  context: LocalizedString;
+}[] = [
+  {
+    id: "throughput",
+    figure: "1M+",
+    label: { en: "financial documents / month", tr: "finansal belge / ay" },
+    context: { en: "Expense extraction · Sun Group", tr: "Belge çıkarımı · Sun Group" },
+  },
+  {
+    id: "latency",
+    figure: "<10s",
+    label: { en: "per document", tr: "belge başına" },
+    context: { en: "FastAPI extraction service", tr: "FastAPI çıkarım servisi" },
+  },
+  {
+    id: "automation",
+    figure: "50+",
+    label: { en: "automation scripts", tr: "otomasyon senaryosu" },
+    context: { en: "Sardis · Turkcell", tr: "Sardis · Turkcell" },
+  },
+  {
+    id: "teknofest",
+    figure: "Finalist",
+    label: { en: "TEKNOFEST", tr: "TEKNOFEST" },
+    context: { en: "Lightweight C4ISR prototype", tr: "Hafif C4ISR prototipi" },
   },
 ];

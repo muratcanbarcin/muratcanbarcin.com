@@ -46,6 +46,7 @@ export interface Dictionary {
       stack: string;
       languages: string;
       email: string;
+      leadership: string;
     };
     resumeOpening: string;
   };
@@ -142,6 +143,26 @@ export interface Dictionary {
     resumeTitle: string;
     resumeBody: string;
     locationLabel: string;
+    formTitle: string;
+    formBody: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    inquiryEmailLabel: string;
+    inquiryEmailPlaceholder: string;
+    messageLabel: string;
+    messagePlaceholder: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    errors: {
+      name: string;
+      email: string;
+      messageRequired: string;
+      /** Supports a `{max}` placeholder. */
+      message: string;
+      rateLimited: string;
+      generic: string;
+    };
   };
   projects: {
     featured: string;
@@ -163,10 +184,8 @@ export interface Dictionary {
     /** Supports `{count}`. Singular and plural are separate because English inflects. */
     tenureYear: string;
     tenureYears: string;
-    rolesLabel: string;
-    rolesCount: string;
-    organizationsLabel: string;
-    organizationsCount: string;
+    leadership: string;
+    leadershipNote: string;
   };
   research: {
     authors: string;
