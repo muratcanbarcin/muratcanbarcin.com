@@ -6,7 +6,7 @@ import { portfolioData } from "@/data/portfolioData";
 import { useLocale } from "@/hooks/useLocale";
 import { RequestResumeButton } from "./RequestResumeButton";
 import { SocialLinks } from "./SocialLinks";
-import { TerminalTrigger } from "./TerminalTrigger";
+import { ConsoleTrigger } from "./ConsoleTrigger";
 import { cn } from "@/lib/utils";
 
 interface MobileMenuProps {
@@ -76,7 +76,7 @@ export function MobileMenu({ id, isOpen, onClose, activeSection, shortcutLabel }
               </ul>
 
               <div className="flex flex-col gap-3">
-                <TerminalTrigger shortcutLabel={shortcutLabel} onTrigger={onClose} className="w-full sm:hidden" />
+                <ConsoleTrigger shortcutLabel={shortcutLabel} onTrigger={onClose} className="w-full sm:hidden" />
                 <RequestResumeButton intent="primary" size="lg" onClick={onClose} className="w-full md:hidden" />
               </div>
 

@@ -6,11 +6,16 @@ import type { LocalizedString } from "./locale";
  */
 export interface ContactDetails {
   email: string;
-  workMode: LocalizedString;
+  /** Remote / relocation status shown next to the location everywhere it appears. */
+  availability: LocalizedString;
 }
 
 export type ResumeRequestField = "email" | "company" | "message";
 
 export type ResumeRequestPayload = Record<ResumeRequestField, string>;
+
+export type ContactInquiryField = "name" | "email" | "message";
+
+export type ContactInquiryPayload = Record<ContactInquiryField, string>;
 
 export type ResumeRequestOutcome = "received" | "invalid" | "rate-limited" | "error";

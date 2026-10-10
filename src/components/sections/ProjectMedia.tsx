@@ -79,7 +79,7 @@ const CORNER_MARKS = [
   "right-2 bottom-2 border-r border-b",
 ] as const;
 
-/** Schematic generated from the architecture flow, shown until real screenshots exist. */
+/** Schematic generated from the architecture flow, shown until topology diagrams and walkthroughs ship. */
 function BlueprintPlaceholder({ project }: { project: Project }) {
   const { t } = useLocale();
   const steps = project.architectureFlow;
@@ -99,31 +99,36 @@ function BlueprintPlaceholder({ project }: { project: Project }) {
       ))}
 
       <div className="relative flex min-h-60 flex-1 flex-col justify-between gap-6 p-5">
-        <div className="flex items-center justify-between gap-3 font-mono text-[10px] tracking-wider text-zinc-600 uppercase">
-          <span className="truncate">fig.01 — {project.slug}</span>
-          <span className="shrink-0">{t("projects.mediaPending")}</span>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="truncate font-mono text-[10px] tracking-wider text-zinc-500 uppercase">
+              fig.01 — {project.slug}
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-2 rounded-md border border-amber-300/50 bg-amber-400/15 px-2.5 py-1 font-mono text-[11px] font-semibold tracking-wide text-amber-100">
+              <span
+                aria-hidden="true"
+                className="size-1.5 shrink-0 animate-pulse rounded-full bg-amber-300 motion-reduce:animate-none"
+              />
+              {t("projects.mediaPending")}
+            </span>
+          </div>
+          <figcaption className="max-w-prose text-sm leading-relaxed text-pretty text-zinc-100">
+            {t("projects.placeholderCaption")}
+          </figcaption>
         </div>
 
-        <ol aria-hidden="true" className="flex flex-wrap items-center justify-center gap-y-3">
+        <ol className="flex flex-wrap items-center justify-center gap-y-3">
           {steps.map((step, index) => (
             <li key={step.step} className="flex items-center">
               <span className="rounded border border-dashed border-zinc-700 bg-zinc-900/90 px-2.5 py-1.5 font-mono text-[10px] text-zinc-400 shadow-[0_0_0_3px_rgb(9_9_11)]">
                 {step.title}
               </span>
               {index < steps.length - 1 && (
-                <span className="mx-1.5 w-4 border-t border-dashed border-zinc-600 sm:w-6" />
+                <span aria-hidden="true" className="mx-1.5 w-4 border-t border-dashed border-zinc-600 sm:w-6" />
               )}
             </li>
           ))}
         </ol>
-
-        <figcaption className="flex items-center gap-2 font-mono text-[11px] text-zinc-500">
-          <span
-            aria-hidden="true"
-            className="size-1.5 shrink-0 animate-pulse rounded-full bg-amber-400/80 motion-reduce:animate-none"
-          />
-          {t("projects.placeholderCaption")}
-        </figcaption>
       </div>
     </figure>
   );

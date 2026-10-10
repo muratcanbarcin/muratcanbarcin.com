@@ -51,6 +51,9 @@ export const chatRateLimiter = createSlidingWindowLimiter({ limit: 8, windowMs: 
 /** Resume requests are rare by nature: 3 submissions per 10 minutes per address. */
 export const resumeRequestRateLimiter = createSlidingWindowLimiter({ limit: 3, windowMs: 600_000 });
 
+/** Contact inquiries: 3 submissions per 10 minutes per address. */
+export const contactInquiryRateLimiter = createSlidingWindowLimiter({ limit: 3, windowMs: 600_000 });
+
 /** First forwarded address wins; falls back to the direct peer header, then a shared unknown bucket. */
 export function readClientAddress(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");

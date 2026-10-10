@@ -24,9 +24,5 @@ export interface TerminalLine {
   href?: string;
 }
 
-/** Side effects the terminal shell performs after rendering a command's output. */
+/** Side effects the console performs after rendering a command's output. */
 export type TerminalEffect = "clear" | "close" | "request-resume";
-
-export type TerminalEntry =
-  | { id: number; kind: "command"; input: string }
-  | { id: number; kind: "completions"; input: string; matches: readonly string[] };

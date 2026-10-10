@@ -39,14 +39,21 @@ export function ProjectCard({ project }: { project: Project }) {
         project.featured ? "bg-linear-to-b from-zinc-900/80 to-zinc-900/30" : "bg-zinc-900/30",
       )}
     >
-      {project.featured && (
-        <span
-          aria-hidden="true"
-          className="absolute inset-x-8 -top-px h-px bg-linear-to-r from-transparent via-emerald-400/60 to-transparent"
-        />
-      )}
+      <span
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-x-8 -top-px h-px bg-linear-to-r from-transparent to-transparent",
+          project.award ? "via-amber-300/80" : project.featured ? "via-emerald-400/60" : "via-transparent",
+        )}
+      />
 
       <header className="flex flex-col gap-3">
+        {project.award && (
+          <p className="inline-flex w-fit items-center gap-2 rounded-md border border-amber-300/50 bg-amber-400/15 px-3 py-1.5 font-mono text-xs font-semibold tracking-wide text-amber-100">
+            <span aria-hidden="true">★</span>
+            {localize(project.award)}
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
           <span className="rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-0.5 text-zinc-300">
             {dictionary.filters.categories[project.category]}

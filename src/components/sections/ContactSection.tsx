@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowUpRight, Check, Copy, MapPin } from "lucide-react";
+import { ArrowUpRight, Check, Copy } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import type { SocialLink, SocialPlatform } from "@/types";
 import { portfolioData } from "@/data/portfolioData";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useLocale } from "@/hooks/useLocale";
+import { AvailabilityBadge } from "@/components/common/AvailabilityBadge";
 import { GitHubIcon, LinkedInIcon } from "@/components/common/BrandIcons";
 import { RequestResumeButton } from "@/components/common/RequestResumeButton";
 import { SectionHeader } from "@/components/common/SectionHeader";
@@ -33,7 +34,7 @@ const PROFILE_LINKS: readonly ProfileLink[] = PROFILE_ORDER.flatMap((platform) =
 const CARD_CLASSES = "flex flex-col rounded-xl border border-zinc-800 bg-zinc-900/30 p-5 sm:p-6";
 
 export function ContactSection() {
-  const { t, localize } = useLocale();
+  const { t } = useLocale();
   const clipboard = useCopyToClipboard();
 
   const copyLabel =
@@ -50,17 +51,7 @@ export function ContactSection() {
         command="./contact --init"
         title={t("sections.contact")}
         titleId="contact-title"
-        aside={
-          <p className="inline-flex w-fit items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/40 px-3 py-1.5 font-mono text-[11px] text-zinc-400">
-            <MapPin aria-hidden="true" className="size-3.5 text-emerald-400/80" />
-            <span className="sr-only">{t("contact.locationLabel")}: </span>
-            <span className="text-zinc-200">{profile.location}</span>
-            <span aria-hidden="true" className="text-zinc-600">
-              •
-            </span>
-            {localize(contact.workMode)}
-          </p>
-        }
+        aside={<AvailabilityBadge />}
       />
 
       <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -7,7 +7,7 @@ import { portfolioData } from "@/data/portfolioData";
 import { useLocale } from "@/hooks/useLocale";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import { TechTagList } from "@/components/common/TechTag";
-import { formatYearMonth, monthsBetweenInclusive } from "@/lib/date";
+import { formatYearMonth, monthsBetweenInclusive, roundedYearCount } from "@/lib/date";
 import { shortHash } from "@/lib/hash";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ export function ExperienceSection() {
         title={t("sections.experience")}
         titleId="experience-title"
       />
+      <ExperienceSummary />
       <ol className="relative flex flex-col gap-6">
         <span
           aria-hidden="true"
@@ -43,6 +44,38 @@ interface CommitShellProps {
   refLabel?: string;
   meta: ReactNode;
   children: ReactNode;
+}
+
+function ExperienceSummary() {
+  const { t } = useLocale();
+  const months = experiences.reduce((total, experience) => {
+    if (experience.period.end === "Present") return total;
+    return total + (monthsBetweenInclusive(experience.period.start, experience.period.end) ?? 0);
+  }, 0);
+  const years = roundedYearCount(months);
+  const organizations = new Set(experiences.map((experience) => experience.company)).size;
+  const stats = [
+    {
+      label: t("experience.tenureLabel"),
+      value: t(years === 1 ? "experience.tenureYear" : "experience.tenureYears", { count: years }),
+    },
+    { label: t("experience.rolesLabel"), value: t("experience.rolesCount", { count: experiences.length }) },
+    {
+      label: t("experience.organizationsLabel"),
+      value: t("experience.organizationsCount", { count: organizations }),
+    },
+  ];
+
+  return (
+    <dl className="mb-6 grid grid-cols-3 gap-3">
+      {stats.map((stat) => (
+        <div key={stat.label} className="rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-4 sm:px-5">
+          <dt className="font-mono text-[10px] tracking-wider text-zinc-500 uppercase sm:text-[11px]">{stat.label}</dt>
+          <dd className="mt-1 font-mono text-base font-semibold tracking-tight break-words text-zinc-50 sm:text-xl">{stat.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 function CommitShell({ hash, isHead = false, refLabel, meta, children }: CommitShellProps) {

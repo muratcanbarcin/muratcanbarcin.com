@@ -6,7 +6,7 @@ export const profile: Profile = {
     en: "Software Engineer (Backend & AI)",
     tr: "Yazılım Mühendisi (Backend & AI)",
   },
-  location: "İzmir, Türkiye",
+  location: "Gaziantep, Türkiye",
   summary: {
     en: "Honor Computer Engineering graduate dedicated to architecting scalable backend systems, applied AI solutions, and IoT integrations. Brings corporate engineering experience from leading companies such as Turkcell and Sun Group, complemented by technical instructor experience at techcareer.net and a robust portfolio of diverse projects. Aims to blend technical expertise with strong interpersonal and leadership skills to develop high-quality, scalable products that create tangible real-world value.",
     tr: "Ölçeklenebilir backend mimarileri, yapay zeka çözümleri ve IoT entegrasyonları geliştirmeye odaklanan onur dereceli Bilgisayar Mühendisliği mezunu. Turkcell ve Sun Group gibi şirketlerde edindiği kurumsal geliştirme deneyimini; techcareer.net bünyesindeki teknik eğitmenlik tecrübesi ve başarıyla hayata geçirdiği projelerle zenginleştirmektedir. Teknik uzmanlığını güçlü sosyal ve liderlik becerileriyle harmanlayarak; gerçek dünyada somut değer yaratan, yüksek kaliteli ve ölçeklenebilir ürünler geliştirmeyi hedeflemektedir.",

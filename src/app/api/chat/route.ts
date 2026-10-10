@@ -5,7 +5,12 @@ import { createTokenStream, streamPortfolioChat } from "@/services/aiService";
 
 const MESSAGE_WINDOW = 12;
 
-/** Gives the fallback stream room to finish on hosts that cap serverless execution. */
+/**
+ * Serverless execution ceiling. Both model attempts in `streamPortfolioChat` share a 26s
+ * budget so failover cannot overrun this route.
+ * `export const dynamic = "force-dynamic"` is rejected under `cacheComponents`; POST
+ * handlers are never cached, and responses already send `Cache-Control: no-store`.
+ */
 export const maxDuration = 30;
 
 const chatRequestSchema = z

@@ -1,4 +1,5 @@
 import type { CertificationCategory } from "./certification";
+import type { ChatErrorKind } from "./console";
 import type { EmploymentType } from "./experience";
 import type { ProjectCategory, ProjectStatus } from "./project";
 import type { ProjectLinkType } from "./media";
@@ -26,17 +27,9 @@ export interface Dictionary {
   };
   terminal: {
     open: string;
-    close: string;
     /** Supports a `{shortcut}` placeholder. */
     shortcutHint: string;
-    title: string;
     prompt: string;
-    placeholder: string;
-    inputLabel: string;
-    outputLabel: string;
-    /** Supports a `{name}` placeholder. */
-    welcome: string;
-    welcomeHint: string;
     /** Supports a `{command}` placeholder. */
     notFound: string;
     notFoundHint: string;
@@ -48,6 +41,10 @@ export interface Dictionary {
       role: string;
       location: string;
       status: string;
+      education: string;
+      experience: string;
+      stack: string;
+      languages: string;
       email: string;
     };
     resumeOpening: string;
@@ -91,26 +88,25 @@ export interface Dictionary {
     honor: string;
     coursework: string;
   };
-  chat: {
+  console: {
     title: string;
     badge: string;
+    ready: string;
     welcome: string;
+    routingHint: string;
+    placeholder: string;
+    inputLabel: string;
+    outputLabel: string;
+    send: string;
+    clear: string;
+    /** Supports a `{shortcut}` placeholder. */
     expand: string;
     collapse: string;
-    clear: string;
-    placeholder: string;
-    send: string;
-    inputLabel: string;
     suggestionsLabel: string;
-    suggestions: {
-      experience: string;
-      c4isr: string;
-      stack: string;
-    };
+    /** Shown under the label so the chips read as prompts, not as console output. */
+    suggestionsHint: string;
     responding: string;
-    error: string;
-    rateLimited: string;
-    unavailable: string;
+    errors: Record<ChatErrorKind, string>;
   };
   resumeModal: {
     title: string;
@@ -163,6 +159,14 @@ export interface Dictionary {
     education: string;
     rootCommit: string;
     proofs: string;
+    tenureLabel: string;
+    /** Supports `{count}`. Singular and plural are separate because English inflects. */
+    tenureYear: string;
+    tenureYears: string;
+    rolesLabel: string;
+    rolesCount: string;
+    organizationsLabel: string;
+    organizationsCount: string;
   };
   research: {
     authors: string;
@@ -176,7 +180,6 @@ export interface Dictionary {
     keyMetrics: string;
     highlights: string;
     gpa: string;
-    comingSoon: string;
     /** Supports a `{count}` placeholder (month count). */
     duration: string;
     readMore: string;

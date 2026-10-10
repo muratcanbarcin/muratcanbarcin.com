@@ -33,4 +33,6 @@ export interface Project {
   links: ProjectLink[];
   status: ProjectStatus;
   featured: boolean;
+  /** Competition or distinction rendered as a prominent mark, separate from metrics. */
+  award?: LocalizedString;
 }

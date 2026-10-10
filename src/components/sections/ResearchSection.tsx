@@ -79,14 +79,26 @@ function PublicationCard({ publication }: { publication: Publication }) {
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:gap-10">
         <div className="flex flex-col gap-5">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[11px]">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-400/10 px-2.5 py-0.5 text-amber-300">
-              <span aria-hidden="true" className="size-1.5 rounded-full bg-amber-400" />
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5",
+                publication.submissionDate
+                  ? "border-amber-400/25 bg-amber-400/10 text-amber-300"
+                  : "border-sky-400/30 bg-sky-400/10 text-sky-200",
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn("size-1.5 rounded-full", publication.submissionDate ? "bg-amber-400" : "bg-sky-300")}
+              />
               {localize(publication.status)}
             </span>
             <span className="text-zinc-300">{publication.journal}</span>
-            <span className="text-zinc-500">
-              {t("research.submitted", { date: formatYearMonth(publication.submissionDate, currentLocale) })}
-            </span>
+            {publication.submissionDate && (
+              <span className="text-zinc-500">
+                {t("research.submitted", { date: formatYearMonth(publication.submissionDate, currentLocale) })}
+              </span>
+            )}
           </div>
 
           <h3 className="text-xl font-semibold tracking-tight text-balance text-zinc-100 sm:text-2xl">

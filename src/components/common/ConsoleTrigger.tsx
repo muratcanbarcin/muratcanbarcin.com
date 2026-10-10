@@ -1,22 +1,23 @@
 "use client";
 
 import { useLocale } from "@/hooks/useLocale";
-import { requestTerminalOpen } from "@/services/terminalEvents";
+import { requestConsole } from "@/services/consoleEvents";
 import { actionVariants } from "@/components/ui/action";
 import { cn } from "@/lib/utils";
 
-interface TerminalTriggerProps {
+interface ConsoleTriggerProps {
   shortcutLabel: string;
   className?: string;
   onTrigger?: () => void;
 }
 
-export function TerminalTrigger({ shortcutLabel, className, onTrigger }: TerminalTriggerProps) {
+/** Opens the unified console in focus mode. Commands and questions share that one prompt. */
+export function ConsoleTrigger({ shortcutLabel, className, onTrigger }: ConsoleTriggerProps) {
   const { t } = useLocale();
 
   const handleClick = () => {
     onTrigger?.();
-    requestTerminalOpen();
+    requestConsole({ action: "open" });
   };
 
   return (

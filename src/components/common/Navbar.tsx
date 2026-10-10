@@ -5,13 +5,13 @@ import { portfolioData } from "@/data/portfolioData";
 import { useActiveSection } from "@/hooks/useActiveSection";
 import { useLocale } from "@/hooks/useLocale";
 import { useMobileMenu } from "@/hooks/useMobileMenu";
-import { useTerminalShortcut } from "@/hooks/useTerminalShortcut";
+import { useConsoleShortcut } from "@/hooks/useConsoleShortcut";
 import { actionVariants } from "@/components/ui/action";
 import { LanguageToggle } from "./LanguageToggle";
 import { MobileMenu } from "./MobileMenu";
 import { Monogram } from "./Monogram";
 import { RequestResumeButton } from "./RequestResumeButton";
-import { TerminalTrigger } from "./TerminalTrigger";
+import { ConsoleTrigger } from "./ConsoleTrigger";
 import { cn } from "@/lib/utils";
 
 const MOBILE_MENU_ID = "mobile-menu";
@@ -22,7 +22,7 @@ export function Navbar() {
   const { t } = useLocale();
   const menu = useMobileMenu();
   const activeSection = useActiveSection(NAV_SECTION_IDS);
-  const shortcutLabel = useTerminalShortcut();
+  const shortcutLabel = useConsoleShortcut();
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-md">
@@ -60,7 +60,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-1.5 sm:gap-2">
           <LanguageToggle />
-          <TerminalTrigger shortcutLabel={shortcutLabel} className="hidden sm:inline-flex" />
+          <ConsoleTrigger shortcutLabel={shortcutLabel} className="hidden sm:inline-flex" />
           <RequestResumeButton intent="primary" className="hidden md:inline-flex" />
           <button
             type="button"

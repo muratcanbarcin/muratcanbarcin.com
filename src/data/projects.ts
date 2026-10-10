@@ -15,8 +15,8 @@ export const projects: readonly Project[] = [
     },
     category: "defense-edge",
     summary: {
-      en: "A polyglot microservices C4ISR prototype that fuses multi-source sensor data at the edge for real-time situational awareness and threat detection.",
-      tr: "Gerçek zamanlı durumsal farkındalık ve tehdit algılama için çok kaynaklı sensör verilerini uçta (edge) birleştiren polyglot mikroservis tabanlı bir C4ISR prototipi.",
+      en: "TEKNOFEST finalist. A polyglot microservices C4ISR prototype that fuses multi-source sensor data at the edge for real-time situational awareness and threat detection.",
+      tr: "TEKNOFEST finalisti. Gerçek zamanlı durumsal farkındalık ve tehdit algılama için çok kaynaklı sensör verilerini uçta birleştiren polyglot mikroservis tabanlı bir C4ISR prototipi.",
     },
     description: {
       en: "Architected a polyglot microservices system for a lightweight C4ISR prototype, using Java and Python services to ensure modularity, scalability, and robust system design. Implemented multi-source data fusion algorithms on Raspberry Pi 5 with AI Cameras, enabling real-time Edge AI processing for immediate situational awareness and threat detection. Developed a decision support interface that visualizes fused sensor data on tactical maps, managing the development lifecycle via Agile methodologies and Jira.",
@@ -77,6 +77,7 @@ export const projects: readonly Project[] = [
     links: [],
     status: "completed",
     featured: true,
+    award: { en: "TEKNOFEST Finalist", tr: "TEKNOFEST Finalisti" },
   },
   {
     id: "sun-group-expense",

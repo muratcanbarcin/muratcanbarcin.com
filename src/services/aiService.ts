@@ -1,11 +1,18 @@
 import { APICallError, streamText, type ModelMessage } from "ai";
-import { google } from "@ai-sdk/google";
+import { google, type GoogleLanguageModelOptions } from "@ai-sdk/google";
 import type { ChatTurn, LocalizedString, PortfolioData } from "@/types";
 import { portfolioData } from "@/data/portfolioData";
 import { AI_FAILOVER_LOG, FALLBACK_MODEL_ID, PRIMARY_MODEL_ID, type AiModelId } from "@/lib/aiModels";
 
-const MODEL_TIMEOUT = { totalMs: 20_000, firstChunkMs: 12_000 } as const;
-const MAX_OUTPUT_TOKENS = 900;
+/** Both model attempts share this wall-clock budget, kept below the route's `maxDuration` of 30s. */
+export const CHAT_STREAM_BUDGET_MS = 26_000;
+const FIRST_CHUNK_TIMEOUT_MS = 8_000;
+const MAX_OUTPUT_TOKENS = 700;
+
+/** Thinking tokens are billed against `maxOutputTokens` and delay the first visible token. */
+const PROVIDER_OPTIONS = {
+  google: { thinkingConfig: { thinkingLevel: "low" } } satisfies GoogleLanguageModelOptions,
+};
 
 export interface ModelStreamEvent {
   type: string;
@@ -14,10 +21,16 @@ export interface ModelStreamEvent {
   reason?: string;
 }
 
+export interface ModelTimeout {
+  totalMs: number;
+  firstChunkMs: number;
+}
+
 /** Opens a provider stream. Tests substitute this to simulate quota and transport failures. */
 export type ModelStreamOpener = (
   modelId: AiModelId,
   messages: readonly ModelMessage[],
+  timeout: ModelTimeout,
 ) => Promise<AsyncIterable<ModelStreamEvent>>;
 
 export interface PortfolioChatStream {
@@ -31,22 +44,31 @@ const SYSTEM_PROMPT = buildSystemPrompt(portfolioData);
  * Dual-model fallback. The primary stream is probed until the first text token or a terminal
  * failure. Quota, rate-limit, timeout, and 5xx failures switch to the lite model before any
  * byte is written to the client, so the visitor only observes one continuous token stream.
+ * The fallback only receives whatever remains of the shared budget, so a slow primary can
+ * never push the request past the serverless execution limit.
  */
 export async function streamPortfolioChat(
   turns: readonly ChatTurn[],
   openStream: ModelStreamOpener = openGoogleModelStream,
+  now: () => number = Date.now,
 ): Promise<PortfolioChatStream> {
   const messages = toModelMessages(turns);
+  const deadline = now() + CHAT_STREAM_BUDGET_MS;
 
   try {
-    const text = await commitTextStream(await openStream(PRIMARY_MODEL_ID, messages));
-    return { modelId: PRIMARY_MODEL_ID, text };
+    const stream = await openStream(PRIMARY_MODEL_ID, messages, budgetTimeout(deadline, now()));
+    return { modelId: PRIMARY_MODEL_ID, text: await commitTextStream(stream) };
   } catch (error) {
     if (!isFailoverError(error)) throw error;
     console.error(AI_FAILOVER_LOG);
-    const text = await commitTextStream(await openStream(FALLBACK_MODEL_ID, messages));
-    return { modelId: FALLBACK_MODEL_ID, text };
+    const stream = await openStream(FALLBACK_MODEL_ID, messages, budgetTimeout(deadline, now()));
+    return { modelId: FALLBACK_MODEL_ID, text: await commitTextStream(stream) };
   }
+}
+
+export function budgetTimeout(deadline: number, current: number): ModelTimeout {
+  const totalMs = Math.max(1_000, deadline - current);
+  return { totalMs, firstChunkMs: Math.min(FIRST_CHUNK_TIMEOUT_MS, totalMs) };
 }
 
 export function isFailoverError(error: unknown): boolean {
@@ -92,6 +114,7 @@ export function createTokenStream(tokens: AsyncIterable<string>): ReadableStream
 async function openGoogleModelStream(
   modelId: AiModelId,
   messages: readonly ModelMessage[],
+  timeout: ModelTimeout,
 ): Promise<AsyncIterable<ModelStreamEvent>> {
   const result = streamText({
     model: google(modelId),
@@ -99,7 +122,8 @@ async function openGoogleModelStream(
     messages: [...messages],
     maxRetries: 0,
     maxOutputTokens: MAX_OUTPUT_TOKENS,
-    timeout: MODEL_TIMEOUT,
+    timeout,
+    providerOptions: PROVIDER_OPTIONS,
   });
   return result.stream;
 }
@@ -170,9 +194,31 @@ function buildSystemPrompt(data: PortfolioData): string {
   const lines: string[] = [
     "You are MCB.ai, the official technical AI assistant representing Murat Can Barçin (Software Engineer - Backend & AI).",
     "- Identify only as MCB.ai. Never name or speculate about the underlying model, vendor, or provider; if asked, say you are MCB.ai, Murat Can's portfolio agent.",
-    "- Maintain a concise, articulate, and deeply technical tone.",
-    "- Language matching: Respond in Turkish if asked in Turkish, respond in English if asked in English.",
+    "",
+    "IDENTITY & CORE ANCHOR (deductive hierarchy: reason from the apex down, never from a branch up)",
+    "- Apex Title: Software Engineer (Backend & AI).",
+    "- Core Engineering Foundations: architecting high-throughput distributed backend systems, modular microservices, relational/NoSQL database design, and end-to-end Applied AI engineering.",
+    "",
+    "SPECIALIZED BRANCHES",
+    "1. Backend Engineering Domain:",
+    "   - Enterprise solutions & legacy integrations (SAP workflows, multi-level corporate approvals as delivered at Sun Group).",
+    "   - Identity & security architecture (Risk-Based Access Control (RBAC), automated SSO escalation).",
+    "   - Resilient polyglot microservice ecosystems (Java Spring Boot & Python FastAPI).",
+    "   - High-scale transaction handling and payment/subscription lifecycle APIs (Turkcell Sardis).",
+    "2. Applied AI & Data Engineering Domain:",
+    "   - Edge computing & IoT (Raspberry Pi 5 nodes, OpenCV real-time edge inference as a TEKNOFEST C4ISR finalist).",
+    "   - Multi-source sensor & data fusion algorithms.",
+    "   - Financial and access anomaly detection (Isolation Forest, XGBoost, SHAP, forensic reporting).",
+    "   - LLM inference & optimization pipelines (QLoRA, Llama 3.1 8B fine-tuning, local agentic workflows).",
+    "",
+    "CONVERSATIONAL DIRECTIVES",
+    "- Deliver structured, technically profound, and succinct responses: at most ~180 words unless the visitor explicitly asks for depth. Never meander; long prose risks client timeouts.",
+    "- Use bullet points, **bold** key architectures, and cite concrete metrics from the context below.",
+    "- Lead with the general Software Engineering / Backend & AI identity. Drill into Edge AI or Enterprise SAP only when the question is about them.",
+    "- Backend questions (APIs, microservices, databases, scale, Java, Spring Boot) are answered from the Backend Engineering Domain first — Sun Group, Turkcell Sardis, Enterprise Agent for SSO — not from edge or IoT projects.",
+    "- Strictly respect language parity: Turkish for Turkish queries, English for English queries.",
     "- Strictly bound your knowledge to Murat Can's education, enterprise experience, research, and project portfolio.",
+    "- The site also offers a local shell inside this console: visitors can type /help, /projects, /exp, /skills, /whoami, or /resume. Mention it when a visitor asks how to navigate.",
     "- OUT-OF-SCOPE BOUNDARY: If a user asks general programming challenges, weather, politics, or unrelated queries, politely decline: 'I am specifically designed to answer inquiries regarding Murat Can Barçin's engineering career, backend systems, and AI portfolio. Would you like to know more about his work at Sun Group, Turkcell, or his Teknofest C4ISR system?'",
     "- When the visitor writes in Turkish, decline with the same boundary in Turkish: 'Murat Can Barçin'in mühendislik kariyeri, backend sistemleri ve yapay zeka portföyü hakkındaki soruları yanıtlamak için tasarlandım. Sun Group, Turkcell veya Teknofest C4ISR sistemi üzerindeki çalışmaları hakkında bilgi ister misiniz?'",
     `- Never hallucinate contact phone numbers or direct PDF links. If asked for a resume, guide the user to click the 'Request Resume' button, which opens an in-site request form.`,
@@ -184,7 +230,7 @@ function buildSystemPrompt(data: PortfolioData): string {
     `Location: ${data.profile.location}`,
     `Summary: ${bilingual(data.profile.summary)}`,
     `Contact email: ${email}`,
-    `Work mode: ${bilingual(data.contact.workMode)}`,
+    `Availability: ${bilingual(data.contact.availability)}`,
     "Resume delivery: there is no public phone number and no direct PDF URL. Use the Request Resume button; the contact email is for general inquiries.",
     "",
     "EDUCATION",
@@ -227,8 +273,9 @@ function buildSystemPrompt(data: PortfolioData): string {
 
   lines.push("", "RESEARCH");
   for (const publication of data.publications) {
+    const submitted = publication.submissionDate ? ` | submitted ${publication.submissionDate}` : "";
     lines.push(
-      `- "${publication.title}" | ${publication.authors.join(", ")} | ${publication.journal} | ${bilingual(publication.status)} | submitted ${publication.submissionDate}`,
+      `- "${publication.title}" | ${publication.authors.join(", ")} | ${publication.journal} | ${bilingual(publication.status)}${submitted}`,
     );
     lines.push(`  Abstract: ${bilingual(publication.abstract)}`);
     lines.push(`  Key tech: ${publication.keyTech.join(", ")}`);

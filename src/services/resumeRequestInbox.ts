@@ -5,8 +5,8 @@ export interface ResumeRequestRecord extends ResumeRequestPayload {
 }
 
 /**
- * Server-only sink for validated resume requests. Emits one structured log line per request;
- * swap the body for a transactional email or CRM call without touching the route or the UI.
+ * Server-only audit trail for validated resume requests. Emits one structured log line per
+ * request so nothing is lost even when the email notification is skipped or rejected.
  */
 export async function recordResumeRequest(
   payload: ResumeRequestPayload,

@@ -2,9 +2,9 @@ import type { ContactDetails } from "@/types";
 
 export const contact: ContactDetails = {
   email: "muratcanbarcin@gmail.com",
-  workMode: {
-    en: "Open to Remote & Relocation",
-    tr: "Uzaktan çalışmaya ve taşınmaya açık",
+  availability: {
+    en: "Open to Remote & Immediate Relocation",
+    tr: "Uzaktan Çalışmaya ve Hızlı Relokasyona Açık",
   },
 };
 

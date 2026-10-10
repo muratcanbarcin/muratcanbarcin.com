@@ -1,7 +1,6 @@
 import { Footer } from "@/components/common/Footer";
 import { Navbar } from "@/components/common/Navbar";
 import { RequestResumeModal } from "@/components/common/RequestResumeModal";
-import { TerminalModal } from "@/components/common/TerminalModal";
 import { ContactSection } from "@/components/sections/ContactSection";
 import { EducationSection } from "@/components/sections/EducationSection";
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
@@ -24,7 +23,6 @@ export default function Home() {
         <ContactSection />
       </main>
       <Footer />
-      <TerminalModal />
       <RequestResumeModal />
     </>
   );

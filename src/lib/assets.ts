@@ -9,6 +9,6 @@ export const certificateAsset = (file: string): string => `${ASSETS_ROOT}/certif
 
 /**
  * `public/assets/documents/<file>` — public documents only. The resume is deliberately never
- * hosted here; it is shared on request via `getResumeRequestHref()`.
+ * hosted here; it is shared on request via the in-app `RequestResumeModal`.
  */
 export const documentAsset = (file: string): string => `${ASSETS_ROOT}/documents/${file}`;

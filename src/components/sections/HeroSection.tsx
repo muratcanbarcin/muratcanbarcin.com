@@ -4,7 +4,8 @@ import { ArrowDownRight } from "lucide-react";
 import { portfolioData } from "@/data/portfolioData";
 import { useLocale } from "@/hooks/useLocale";
 import { actionVariants } from "@/components/ui/action";
-import { MCBAIChat } from "@/components/ai/MCBAIChat";
+import { UnifiedConsole } from "@/components/console/UnifiedConsole";
+import { AvailabilityBadge } from "@/components/common/AvailabilityBadge";
 import { RequestResumeButton } from "@/components/common/RequestResumeButton";
 import { SocialLinks } from "@/components/common/SocialLinks";
 import { GitHubActivity } from "@/components/common/GitHubActivity";
@@ -35,6 +36,7 @@ export function HeroSection() {
               {profile.name}
             </h1>
             <p className="font-mono text-base text-zinc-400 sm:text-lg">{localize(profile.headline)}</p>
+            <AvailabilityBadge className="mt-1" />
           </div>
 
           <p className="max-w-xl text-lg leading-relaxed text-balance text-zinc-400">
@@ -59,7 +61,7 @@ export function HeroSection() {
           <GitHubActivity className="mt-1" />
         </div>
 
-        <MCBAIChat className="h-[30rem] sm:h-[32rem]" />
+        <UnifiedConsole className="h-[32rem] sm:h-[34rem]" />
       </div>
     </section>
   );

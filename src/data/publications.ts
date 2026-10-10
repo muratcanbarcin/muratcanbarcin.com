@@ -15,4 +15,16 @@ export const publications: readonly Publication[] = [
     },
     keyTech: ["SMOTE", "Isolation Forest", "XGBoost", "SHAP", "QLoRA", "Llama 3.1 8B"],
   },
+  {
+    id: "c4isr-edge-fusion",
+    title: "A Polyglot Microservices Architecture for Real-Time Edge Data Fusion in a Lightweight C4ISR Prototype",
+    authors: ["M. C. Barçin"],
+    journal: "Working manuscript",
+    status: { en: "In Preparation", tr: "Hazırlık Aşamasında" },
+    abstract: {
+      en: "Manuscript in preparation on the TEKNOFEST-finalist lightweight C4ISR prototype. It describes a polyglot Java and Python microservice architecture that fuses multi-source sensor detections on Raspberry Pi 5 nodes and presents the fused tracks on a tactical decision-support map.",
+      tr: "TEKNOFEST finalisti hafif C4ISR prototipine ilişkin, hazırlık aşamasındaki çalışma. Raspberry Pi 5 düğümlerinde çok kaynaklı sensör tespitlerini birleştiren ve füzyonlanmış izleri taktik karar destek haritasında sunan polyglot Java ve Python mikroservis mimarisini anlatır.",
+    },
+    keyTech: ["Java", "Python", "Microservices", "Raspberry Pi 5", "Computer Vision", "Data Fusion"],
+  },
 ];

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
-import { requestTerminalOpen } from "@/services/terminalEvents";
+import { requestConsole } from "@/services/consoleEvents";
 
 const subscribeNever = () => () => {};
 const getIsApplePlatform = () => /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -15,7 +15,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 /** ⌘K / Ctrl+K anywhere; `~` or Backquote only while the user isn't typing into a field. */
-function isTerminalShortcut(event: KeyboardEvent): boolean {
+function isConsoleShortcut(event: KeyboardEvent): boolean {
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") return true;
 
   const isBackquoteKey = event.code === "Backquote" || event.key === "`" || event.key === "~";
@@ -24,19 +24,25 @@ function isTerminalShortcut(event: KeyboardEvent): boolean {
   return isBackquoteKey && !hasBlockingModifier && !isEditableTarget(event.target);
 }
 
-/** Registers the global terminal shortcuts and returns the platform-specific label. */
-export function useTerminalShortcut(): string {
+/** Platform-specific label for the focus shortcut; safe to call from any number of components. */
+export function useShortcutLabel(): string {
   const isApple = useSyncExternalStore(subscribeNever, getIsApplePlatform, getServerIsApplePlatform);
+  return isApple ? "⌘K" : "Ctrl K";
+}
+
+/** Registers the global focus-mode toggle. Mount exactly once, or a single keypress toggles twice. */
+export function useConsoleShortcut(): string {
+  const label = useShortcutLabel();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat || !isTerminalShortcut(event)) return;
+      if (event.repeat || !isConsoleShortcut(event)) return;
       event.preventDefault();
-      requestTerminalOpen();
+      requestConsole({ action: "toggle" });
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  return isApple ? "⌘K" : "Ctrl K";
+  return label;
 }

@@ -1,5 +1,6 @@
 import { readClientAddress, resumeRequestRateLimiter } from "@/lib/rateLimit";
 import { collectInvalidFields, resumeRequestSchema } from "@/lib/resumeRequestSchema";
+import { sendResumeRequestNotification } from "@/services/emailService";
 import { recordResumeRequest } from "@/services/resumeRequestInbox";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
@@ -30,8 +31,9 @@ export async function POST(request: Request) {
 
   try {
     await recordResumeRequest(parsed.data);
+    await sendResumeRequestNotification(parsed.data);
   } catch (error) {
-    console.error("[Resume Request] Failed to record request", error);
+    console.error("[Resume Request] Failed to deliver request", error);
     return Response.json({ error: "unavailable" }, { status: 502, headers: NO_STORE });
   }
 

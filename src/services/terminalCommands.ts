@@ -7,6 +7,7 @@ import type {
   TerminalLine,
 } from "@/types";
 import { portfolioData } from "@/data/portfolioData";
+import { monthsBetweenInclusive, roundedYearCount } from "@/lib/date";
 import { interpolate, localize } from "@/lib/i18n";
 
 export interface TerminalContext {
@@ -36,11 +37,25 @@ const COMPLETION_CANDIDATES = TERMINAL_COMMANDS.flatMap((command) => [command.na
 
 const BLANK_LINE: TerminalLine = { text: "" };
 
+function formatTenure(
+  experiences: typeof portfolioData.experiences,
+  dictionary: Dictionary,
+): string {
+  const months = experiences.reduce((total, experience) => {
+    if (experience.period.end === "Present") return total;
+    return total + (monthsBetweenInclusive(experience.period.start, experience.period.end) ?? 0);
+  }, 0);
+  const years = roundedYearCount(months);
+  const template = years === 1 ? dictionary.experience.tenureYear : dictionary.experience.tenureYears;
+  return interpolate(template, { count: years });
+}
+
 export type ResolvedCommand =
   | { kind: "empty" }
   | { kind: "known"; name: TerminalCommandName }
   | { kind: "unknown"; command: string };
 
+/** Accepts the command without its `/` prefix; the console router strips it beforehand. */
 export function resolveCommand(input: string): ResolvedCommand {
   const token = input.trim().split(/\s+/, 1)[0]?.toLowerCase() ?? "";
   if (!token) return { kind: "empty" };
@@ -74,7 +89,7 @@ const RENDERERS: Record<TerminalCommandName, (context: TerminalContext) => Termi
   help: ({ dictionary }) => [
     { text: dictionary.terminal.helpTitle, tone: "heading" },
     ...TERMINAL_COMMANDS.map((command) => ({
-      label: [command.name, ...command.aliases].join(", "),
+      label: [command.name, ...command.aliases].map((name) => `/${name}`).join(", "),
       text: dictionary.terminal.commands[command.name],
     })),
     BLANK_LINE,
@@ -82,12 +97,39 @@ const RENDERERS: Record<TerminalCommandName, (context: TerminalContext) => Termi
   ],
 
   whoami: ({ dictionary, locale }) => {
-    const { profile } = portfolioData;
+    const { profile, contact, education, experiences, skills } = portfolioData;
     const { labels } = dictionary.terminal;
+    const degree = education[0];
+    const organizations = [...new Set(experiences.map((experience) => experience.company))].join(" · ");
+    const backend = skills.find((group) => group.id === "backend-systems");
+    const spoken = profile.languages
+      .map((language) => `${localize(language.name, locale)} ${localize(language.level, locale)}`)
+      .join(", ");
+    const email = profile.socials.find((social) => social.platform === "email");
+
     return [
       { text: profile.name, tone: "heading" },
       { label: labels.role, text: localize(profile.headline, locale) },
       { label: labels.location, text: profile.location },
+      { label: labels.status, text: localize(contact.availability, locale), tone: "success" },
+      degree
+        ? {
+            label: labels.education,
+            text: `${localize(degree.degree, locale)} · ${degree.institution} · GPA ${degree.gpa}/${degree.maxGpa}${degree.honors ? ` · ${localize(degree.honors, locale)}` : ""}`,
+          }
+        : BLANK_LINE,
+      {
+        label: labels.experience,
+        text: `${formatTenure(experiences, dictionary)} · ${organizations}`,
+      },
+      {
+        label: labels.stack,
+        text: (backend?.skills ?? []).slice(0, 6).join(", "),
+      },
+      { label: labels.languages, text: spoken },
+      email
+        ? { label: labels.email, text: email.handle, href: email.url }
+        : BLANK_LINE,
       BLANK_LINE,
       { text: localize(profile.valueProposition, locale), tone: "muted" },
     ];
@@ -149,12 +191,5 @@ export function renderCommandOutput(input: string, context: TerminalContext): Te
   return [
     { text: interpolate(context.dictionary.terminal.notFound, { command: resolved.command }), tone: "error" },
     { text: context.dictionary.terminal.notFoundHint, tone: "muted" },
-  ];
-}
-
-export function renderWelcome({ dictionary }: TerminalContext): TerminalLine[] {
-  return [
-    { text: interpolate(dictionary.terminal.welcome, { name: portfolioData.profile.name }), tone: "heading" },
-    { text: dictionary.terminal.welcomeHint, tone: "muted" },
   ];
 }
