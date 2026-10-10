@@ -29,10 +29,8 @@ export interface Profile {
   headline: LocalizedString;
   location: string;
   summary: LocalizedString;
-  /** One-paragraph pitch rendered in the hero. */
+  /** One-line pitch rendered in the hero. */
   valueProposition: LocalizedString;
-  /** Short proof points rendered as hero chips (e.g. honors, employers, awards). */
-  credentials: LocalizedString[];
   socials: SocialLink[];
   languages: SpokenLanguage[];
 }

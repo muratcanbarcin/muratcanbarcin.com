@@ -9,4 +9,6 @@ export type * from "./profile";
 export type * from "./i18n";
 export type * from "./contact";
 export type * from "./navigation";
+export type * from "./terminal";
+export type * from "./github";
 export type * from "./portfolio";

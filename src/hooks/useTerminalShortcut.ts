@@ -3,19 +3,34 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { requestTerminalOpen } from "@/services/terminalEvents";
 
-const SHORTCUT_KEY = "k";
-
 const subscribeNever = () => () => {};
 const getIsApplePlatform = () => /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const getServerIsApplePlatform = () => false;
 
-/** Registers ⌘K / Ctrl+K to open the terminal and returns the platform-specific label. */
+function isEditableTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+  );
+}
+
+/** ⌘K / Ctrl+K anywhere; `~` or Backquote only while the user isn't typing into a field. */
+function isTerminalShortcut(event: KeyboardEvent): boolean {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") return true;
+
+  const isBackquoteKey = event.code === "Backquote" || event.key === "`" || event.key === "~";
+  // AltGr reports as Ctrl+Alt on Windows, so `~` typed via AltGr must still count.
+  const hasBlockingModifier = event.metaKey || (event.ctrlKey && !event.altKey);
+  return isBackquoteKey && !hasBlockingModifier && !isEditableTarget(event.target);
+}
+
+/** Registers the global terminal shortcuts and returns the platform-specific label. */
 export function useTerminalShortcut(): string {
   const isApple = useSyncExternalStore(subscribeNever, getIsApplePlatform, getServerIsApplePlatform);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() !== SHORTCUT_KEY || !(event.metaKey || event.ctrlKey)) return;
+      if (event.repeat || !isTerminalShortcut(event)) return;
       event.preventDefault();
       requestTerminalOpen();
     };

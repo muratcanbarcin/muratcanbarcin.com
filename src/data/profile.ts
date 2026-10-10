@@ -12,15 +12,9 @@ export const profile: Profile = {
     tr: "Ölçeklenebilir backend mimarileri, yapay zeka çözümleri ve IoT entegrasyonları geliştirmeye odaklanan onur dereceli Bilgisayar Mühendisliği mezunu. Turkcell ve Sun Group gibi şirketlerde edindiği kurumsal geliştirme deneyimini; techcareer.net bünyesindeki teknik eğitmenlik tecrübesi ve başarıyla hayata geçirdiği projelerle zenginleştirmektedir. Teknik uzmanlığını güçlü sosyal ve liderlik becerileriyle harmanlayarak; gerçek dünyada somut değer yaratan, yüksek kaliteli ve ölçeklenebilir ürünler geliştirmeyi hedeflemektedir.",
   },
   valueProposition: {
-    en: "I architect scalable backend systems, ship applied AI pipelines and push inference to the edge — from an AI expense SaaS processing 1M+ documents a month at Sun Group and subscription APIs at Turkcell to a TEKNOFEST-finalist Edge AI C4ISR prototype.",
-    tr: "Ölçeklenebilir backend sistemleri tasarlıyor, uygulamalı yapay zeka pipeline'ları geliştiriyor ve çıkarımı uca (edge) taşıyorum — Sun Group'ta ayda 1M+ belge işleyen yapay zeka destekli masraf SaaS'ından Turkcell'deki abonelik API'lerine ve TEKNOFEST finalisti Edge AI tabanlı C4ISR prototipine kadar.",
+    en: "Architecting scalable backend systems, resilient microservices, and applied AI at the edge.",
+    tr: "Ölçeklenebilir backend sistemleri, dayanıklı mikroservisler ve uçta yapay zeka mimarileri tasarlıyorum.",
   },
-  credentials: [
-    { en: "DEU Honor Graduate", tr: "DEÜ Onur Mezunu" },
-    { en: "Sun Group", tr: "Sun Group" },
-    { en: "Turkcell", tr: "Turkcell" },
-    { en: "TEKNOFEST Finalist", tr: "TEKNOFEST Finalisti" },
-  ],
   socials: [
     { platform: "github", url: "https://github.com/muratcanbarcin", handle: "muratcanbarcin" },
     {

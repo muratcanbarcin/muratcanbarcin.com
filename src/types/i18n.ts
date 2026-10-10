@@ -2,6 +2,7 @@ import type { CertificationCategory } from "./certification";
 import type { EmploymentType } from "./experience";
 import type { ProjectCategory, ProjectStatus } from "./project";
 import type { ProjectLinkType } from "./media";
+import type { TerminalCommandName } from "./terminal";
 
 export interface Dictionary {
   meta: {
@@ -40,15 +41,32 @@ export interface Dictionary {
     title: string;
     prompt: string;
     placeholder: string;
-    send: string;
-    thinking: string;
-    rateLimited: string;
-    error: string;
-    suggestions: {
-      architecture: string;
-      experience: string;
-      stack: string;
+    inputLabel: string;
+    outputLabel: string;
+    /** Supports a `{name}` placeholder. */
+    welcome: string;
+    welcomeHint: string;
+    /** Supports a `{command}` placeholder. */
+    notFound: string;
+    notFoundHint: string;
+    helpTitle: string;
+    helpFooter: string;
+    completions: string;
+    commands: Record<TerminalCommandName, string>;
+    labels: {
+      role: string;
+      location: string;
+      status: string;
+      email: string;
     };
+    resumeOpening: string;
+    /** Supports an `{email}` placeholder. */
+    resumeFallback: string;
+  };
+  github: {
+    latestPush: string;
+    loading: string;
+    unavailable: string;
   };
   filters: {
     label: string;

@@ -1,0 +1,167 @@
+import type {
+  Dictionary,
+  Locale,
+  TerminalCommandName,
+  TerminalCommandSpec,
+  TerminalEffect,
+  TerminalLine,
+} from "@/types";
+import { portfolioData } from "@/data/portfolioData";
+import { interpolate, localize } from "@/lib/i18n";
+
+export interface TerminalContext {
+  dictionary: Dictionary;
+  locale: Locale;
+}
+
+export const TERMINAL_COMMANDS: readonly TerminalCommandSpec[] = [
+  { name: "help", aliases: [] },
+  { name: "whoami", aliases: [] },
+  { name: "projects", aliases: [] },
+  { name: "experience", aliases: ["exp"] },
+  { name: "skills", aliases: [] },
+  { name: "contact", aliases: [] },
+  { name: "resume", aliases: [] },
+  { name: "clear", aliases: [] },
+  { name: "exit", aliases: [] },
+];
+
+const COMMAND_EFFECTS: Partial<Record<TerminalCommandName, TerminalEffect>> = {
+  clear: "clear",
+  exit: "close",
+  resume: "request-resume",
+};
+
+const COMPLETION_CANDIDATES = TERMINAL_COMMANDS.flatMap((command) => [command.name, ...command.aliases]).sort();
+
+const BLANK_LINE: TerminalLine = { text: "" };
+
+export type ResolvedCommand =
+  | { kind: "empty" }
+  | { kind: "known"; name: TerminalCommandName }
+  | { kind: "unknown"; command: string };
+
+export function resolveCommand(input: string): ResolvedCommand {
+  const token = input.trim().split(/\s+/, 1)[0]?.toLowerCase() ?? "";
+  if (!token) return { kind: "empty" };
+  const spec = TERMINAL_COMMANDS.find((command) => command.name === token || command.aliases.includes(token));
+  return spec ? { kind: "known", name: spec.name } : { kind: "unknown", command: token };
+}
+
+export function getCommandEffect(input: string): TerminalEffect | undefined {
+  const resolved = resolveCommand(input);
+  return resolved.kind === "known" ? COMMAND_EFFECTS[resolved.name] : undefined;
+}
+
+export function completeCommand(prefix: string): string[] {
+  const normalized = prefix.trim().toLowerCase();
+  return COMPLETION_CANDIDATES.filter((candidate) => candidate.startsWith(normalized));
+}
+
+export function longestCommonPrefix(values: readonly string[]): string {
+  const [first, ...rest] = values;
+  if (first === undefined) return "";
+  let prefix = first;
+  for (const value of rest) {
+    while (!value.startsWith(prefix)) prefix = prefix.slice(0, -1);
+  }
+  return prefix;
+}
+
+const stripProtocol = (url: string) => url.replace(/^(https?:\/\/|mailto:)(www\.)?/, "");
+
+const RENDERERS: Record<TerminalCommandName, (context: TerminalContext) => TerminalLine[]> = {
+  help: ({ dictionary }) => [
+    { text: dictionary.terminal.helpTitle, tone: "heading" },
+    ...TERMINAL_COMMANDS.map((command) => ({
+      label: [command.name, ...command.aliases].join(", "),
+      text: dictionary.terminal.commands[command.name],
+    })),
+    BLANK_LINE,
+    { text: dictionary.terminal.helpFooter, tone: "muted" },
+  ],
+
+  whoami: ({ dictionary, locale }) => {
+    const { profile } = portfolioData;
+    const { labels } = dictionary.terminal;
+    return [
+      { text: profile.name, tone: "heading" },
+      { label: labels.role, text: localize(profile.headline, locale) },
+      { label: labels.location, text: profile.location },
+      { label: labels.status, text: dictionary.hero.availability, tone: "success" },
+      BLANK_LINE,
+      { text: localize(profile.valueProposition, locale), tone: "muted" },
+    ];
+  },
+
+  projects: ({ dictionary, locale }) => {
+    const ordered = [
+      ...portfolioData.projects.filter((project) => project.featured),
+      ...portfolioData.projects.filter((project) => !project.featured),
+    ];
+    return [
+      { text: dictionary.sections.projects, tone: "heading" },
+      ...ordered.flatMap((project, index): TerminalLine[] => [
+        {
+          label: String(index + 1).padStart(2, "0"),
+          text: project.featured ? `${project.title}  ★` : project.title,
+          tone: project.featured ? "accent" : "default",
+        },
+        { label: "", text: localize(project.subtitle, locale), tone: "muted" },
+        { label: "", text: project.keyMetrics.join(" · "), tone: "muted" },
+      ]),
+    ];
+  },
+
+  experience: ({ dictionary, locale }) => [
+    { text: dictionary.sections.experience, tone: "heading" },
+    ...portfolioData.experiences.map(({ period, role, company }) => ({
+      label: `${period.start} → ${period.end === "Present" ? dictionary.common.present : period.end}`,
+      text: `${localize(role, locale)} @ ${company}`,
+    })),
+  ],
+
+  skills: ({ dictionary, locale }) => [
+    { text: dictionary.sections.skills, tone: "heading" },
+    ...portfolioData.skills.flatMap((group): TerminalLine[] => [
+      { text: localize(group.label, locale), tone: "accent" },
+      { text: group.skills.join(", "), tone: "muted" },
+    ]),
+  ],
+
+  contact: ({ dictionary }) =>
+    portfolioData.profile.socials.map((social) => ({
+      label: social.platform === "email" ? dictionary.terminal.labels.email : social.platform,
+      text: stripProtocol(social.url),
+      href: social.url,
+    })),
+
+  resume: ({ dictionary }) => [
+    { text: dictionary.terminal.resumeOpening, tone: "success" },
+    {
+      text: interpolate(dictionary.terminal.resumeFallback, { email: portfolioData.resumeRequest.recipient }),
+      tone: "muted",
+    },
+  ],
+
+  clear: () => [],
+  exit: () => [],
+};
+
+/** Pure: output is derived at render time, so past entries re-localize when the locale changes. */
+export function renderCommandOutput(input: string, context: TerminalContext): TerminalLine[] {
+  const resolved = resolveCommand(input);
+  if (resolved.kind === "empty") return [];
+  if (resolved.kind === "known") return RENDERERS[resolved.name](context);
+  return [
+    { text: interpolate(context.dictionary.terminal.notFound, { command: resolved.command }), tone: "error" },
+    { text: context.dictionary.terminal.notFoundHint, tone: "muted" },
+  ];
+}
+
+export function renderWelcome({ dictionary }: TerminalContext): TerminalLine[] {
+  return [
+    { text: interpolate(dictionary.terminal.welcome, { name: portfolioData.profile.name }), tone: "heading" },
+    { text: dictionary.terminal.welcomeHint, tone: "muted" },
+  ];
+}

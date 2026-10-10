@@ -7,6 +7,7 @@ import { useLocale } from "@/hooks/useLocale";
 import { actionVariants } from "@/components/ui/action";
 import { RequestResumeLink } from "@/components/common/RequestResumeLink";
 import { SocialLinks } from "@/components/common/SocialLinks";
+import { GitHubActivity } from "@/components/common/GitHubActivity";
 import { cn } from "@/lib/utils";
 
 const { profile } = portfolioData;
@@ -45,20 +46,9 @@ export function HeroSection() {
             <p className="font-mono text-base text-zinc-400 sm:text-xl">{localize(profile.headline)}</p>
           </div>
 
-          <p className="max-w-2xl text-base leading-relaxed text-pretty text-zinc-400 sm:text-lg">
+          <p className="max-w-xl text-lg leading-relaxed text-balance text-zinc-400 sm:text-xl">
             {localize(profile.valueProposition)}
           </p>
-
-          <ul className="flex flex-wrap gap-2">
-            {profile.credentials.map((credential) => (
-              <li
-                key={credential.en}
-                className="rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1 font-mono text-[11px] text-zinc-300 sm:text-xs"
-              >
-                {localize(credential)}
-              </li>
-            ))}
-          </ul>
 
           <div className="flex w-full flex-col gap-3 pt-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
             <a href="#projects" className={cn(actionVariants({ intent: "primary", size: "lg" }), "font-mono text-[13px]")}>
@@ -79,6 +69,8 @@ export function HeroSection() {
             />
             <SocialLinks className="sm:ml-1" />
           </div>
+
+          <GitHubActivity className="mt-2" />
         </div>
 
         <aside

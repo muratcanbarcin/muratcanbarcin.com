@@ -30,6 +30,28 @@ export function formatYearMonth(value: string, locale: Locale): string {
   return `${MONTHS[locale][parsed.month - 1]} ${parsed.year}`;
 }
 
+const RELATIVE_UNITS: readonly [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 365 * 24 * 3600],
+  ["month", 30 * 24 * 3600],
+  ["week", 7 * 24 * 3600],
+  ["day", 24 * 3600],
+  ["hour", 3600],
+  ["minute", 60],
+];
+
+/**
+ * `"3 days ago"` / `"3 gün önce"`. Only call on the client after data arrives — relative
+ * output depends on `now`, so it must never be part of the server-rendered HTML.
+ */
+export function formatRelativeTime(isoDate: string, now: number, locale: Locale): string {
+  const elapsedSeconds = Math.max(0, (now - Date.parse(isoDate)) / 1000);
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  for (const [unit, seconds] of RELATIVE_UNITS) {
+    if (elapsedSeconds >= seconds) return formatter.format(-Math.floor(elapsedSeconds / seconds), unit);
+  }
+  return formatter.format(0, "minute");
+}
+
 /** Inclusive month count, so `2026-03 → 2026-06` is 4 months. */
 export function monthsBetweenInclusive(start: string, end: string): number | null {
   const from = parseYearMonth(start);

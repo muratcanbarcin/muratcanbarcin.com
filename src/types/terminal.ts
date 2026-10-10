@@ -1,0 +1,32 @@
+export type TerminalCommandName =
+  | "help"
+  | "whoami"
+  | "projects"
+  | "experience"
+  | "skills"
+  | "contact"
+  | "resume"
+  | "clear"
+  | "exit";
+
+export interface TerminalCommandSpec {
+  name: TerminalCommandName;
+  aliases: readonly string[];
+}
+
+export type TerminalTone = "default" | "muted" | "accent" | "heading" | "error" | "success";
+
+export interface TerminalLine {
+  text: string;
+  /** Rendered as a fixed-width key column before `text`. */
+  label?: string;
+  tone?: TerminalTone;
+  href?: string;
+}
+
+/** Side effects the terminal shell performs after rendering a command's output. */
+export type TerminalEffect = "clear" | "close" | "request-resume";
+
+export type TerminalEntry =
+  | { id: number; kind: "command"; input: string }
+  | { id: number; kind: "completions"; input: string; matches: readonly string[] };

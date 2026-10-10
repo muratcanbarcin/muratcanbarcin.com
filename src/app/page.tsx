@@ -1,5 +1,6 @@
 import { Footer } from "@/components/common/Footer";
 import { Navbar } from "@/components/common/Navbar";
+import { TerminalModal } from "@/components/common/TerminalModal";
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { ProjectShowcase } from "@/components/sections/ProjectShowcase";
@@ -18,6 +19,7 @@ export default function Home() {
         <SkillsSection />
       </main>
       <Footer />
+      <TerminalModal />
     </>
   );
 }
