@@ -7,6 +7,6 @@ export interface Education {
   maxGpa: string;
   honors?: LocalizedString;
   period: string;
-  coursework?: string[];
+  coursework?: readonly LocalizedString[];
   transcriptUrl?: string;
 }

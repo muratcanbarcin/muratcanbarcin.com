@@ -21,7 +21,7 @@ export function SkillsSection() {
   return (
     <section id="skills" aria-labelledby="skills-title" className="scroll-mt-24">
       <SectionHeader
-        index="04"
+        index="05"
         command="cat ./stack.yaml"
         title={t("sections.skills")}
         description={t("sectionIntros.skills")}

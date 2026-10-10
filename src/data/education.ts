@@ -14,5 +14,12 @@ export const education: readonly Education[] = [
       tr: "Onur Öğrencisi Derecesi ile Mezun",
     },
     period: "2022 – 2026",
+    coursework: [
+      { en: "Data Structures & Algorithms", tr: "Veri Yapıları ve Algoritmalar" },
+      { en: "Object-Oriented Programming", tr: "Nesne Yönelimli Programlama" },
+      { en: "Design Patterns", tr: "Tasarım Desenleri" },
+      { en: "System Design", tr: "Sistem Tasarımı" },
+      { en: "Relational Database Design", tr: "İlişkisel Veritabanı Tasarımı" },
+    ],
   },
 ];

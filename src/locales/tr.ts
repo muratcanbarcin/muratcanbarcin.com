@@ -9,6 +9,7 @@ export const tr: Dictionary = {
     home: "Ana Sayfa",
     about: "Hakkımda",
     experience: "Deneyim",
+    education: "Eğitim",
     projects: "Projeler",
     publications: "Yayınlar",
     research: "Araştırma",
@@ -126,10 +127,38 @@ export const tr: Dictionary = {
     projects:
       "Canlı sistemler, edge prototipleri ve uygulamalı yapay zeka pipeline'ları — her biri arkasındaki veri akışıyla birlikte.",
     experience:
-      "Kariyer geçmişi bir commit log'u olarak: en yeniden başlayarak kurumsal backend deneyiminden ilk commit'e kadar.",
+      "Kariyer geçmişi bir commit log'u olarak: en yeniden başlayarak kurumsal backend, eğitmenlik ve teknik liderlik.",
+    education:
+      "Dokuz Eylül Üniversitesi Bilgisayar Mühendisliği lisans programı, onur derecesi ile tamamlandı.",
     research:
       "Anomali tespiti, açıklanabilirlik ve yerel çalışan LLM'lerin kesişiminde araştırmalar.",
     skills: "Sistem tasarlarken, geliştirirken ve işletirken kullandığım araç seti.",
+  },
+  education: {
+    honor: "Onur Derecesi",
+    coursework: "Dersler",
+  },
+  chat: {
+    open: "MCB.ai'ye Sor (Gemini 3.8)",
+    close: "Sohbeti kapat",
+    clear: "Sohbeti temizle",
+    title: "MCB.ai",
+    telemetry: "Gemini 3.8 / 3.5 Lite",
+    modelPrimary: "Gemini 3.8",
+    modelFallback: "Gemini 3.5 Lite",
+    placeholder: "Portföy hakkında sor…",
+    send: "Gönder",
+    inputLabel: "MCB.ai mesajı",
+    suggestionsLabel: "Önerilen sorular",
+    suggestions: {
+      experience: "Sun Group ve Turkcell Deneyimi",
+      c4isr: "Teknofest C4ISR Mimarisi",
+      stack: "Backend ve AI Yetkinlikleri",
+    },
+    responding: "MCB.ai yanıtlıyor",
+    error: "Asistan bu yanıtı tamamlayamadı. Biraz sonra yeniden deneyin.",
+    rateLimited: "Kısa sürede çok fazla soru gönderildi. Bir dakika bekleyip yeniden deneyin.",
+    unavailable: "MCB.ai geçici olarak kullanılamıyor.",
   },
   projects: {
     featured: "Öne Çıkan",

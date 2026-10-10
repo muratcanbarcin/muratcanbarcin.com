@@ -12,8 +12,8 @@ export const profile: Profile = {
     tr: "Ölçeklenebilir backend mimarileri, yapay zeka çözümleri ve IoT entegrasyonları geliştirmeye odaklanan onur dereceli Bilgisayar Mühendisliği mezunu. Turkcell ve Sun Group gibi şirketlerde edindiği kurumsal geliştirme deneyimini; techcareer.net bünyesindeki teknik eğitmenlik tecrübesi ve başarıyla hayata geçirdiği projelerle zenginleştirmektedir. Teknik uzmanlığını güçlü sosyal ve liderlik becerileriyle harmanlayarak; gerçek dünyada somut değer yaratan, yüksek kaliteli ve ölçeklenebilir ürünler geliştirmeyi hedeflemektedir.",
   },
   valueProposition: {
-    en: "Architecting scalable backend systems, resilient microservices, and applied AI at the edge.",
-    tr: "Ölçeklenebilir backend sistemleri, dayanıklı mikroservisler ve uçta yapay zeka mimarileri tasarlıyorum.",
+    en: "Architecting scalable backend systems, resilient microservices, and applied AI solutions.",
+    tr: "Ölçeklenebilir backend sistemleri, dayanıklı mikroservisler ve uygulamalı yapay zeka çözümleri geliştiriyorum.",
   },
   socials: [
     { platform: "github", url: "https://github.com/muratcanbarcin", handle: "muratcanbarcin" },

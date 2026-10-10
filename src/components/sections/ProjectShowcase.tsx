@@ -21,7 +21,7 @@ export function ProjectShowcase() {
   return (
     <section id="projects" aria-labelledby="projects-title" className="scroll-mt-24">
       <SectionHeader
-        index="01"
+        index="03"
         command="ls ./projects --sort=impact"
         title={t("sections.projects")}
         description={t("sectionIntros.projects")}

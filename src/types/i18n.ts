@@ -13,6 +13,7 @@ export interface Dictionary {
     home: string;
     about: string;
     experience: string;
+    education: string;
     projects: string;
     publications: string;
     research: string;
@@ -101,8 +102,35 @@ export interface Dictionary {
   sectionIntros: {
     projects: string;
     experience: string;
+    education: string;
     research: string;
     skills: string;
+  };
+  education: {
+    honor: string;
+    coursework: string;
+  };
+  chat: {
+    open: string;
+    close: string;
+    clear: string;
+    title: string;
+    telemetry: string;
+    modelPrimary: string;
+    modelFallback: string;
+    placeholder: string;
+    send: string;
+    inputLabel: string;
+    suggestionsLabel: string;
+    suggestions: {
+      experience: string;
+      c4isr: string;
+      stack: string;
+    };
+    responding: string;
+    error: string;
+    rateLimited: string;
+    unavailable: string;
   };
   projects: {
     featured: string;

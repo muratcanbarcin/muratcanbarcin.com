@@ -9,6 +9,7 @@ export const en: Dictionary = {
     home: "Home",
     about: "About",
     experience: "Experience",
+    education: "Education",
     projects: "Projects",
     publications: "Publications",
     research: "Research",
@@ -126,10 +127,38 @@ export const en: Dictionary = {
     projects:
       "Production systems, edge prototypes and applied AI pipelines — each broken down into the data flow behind it.",
     experience:
-      "Career history rendered as a commit log: newest first, from enterprise backend work back to the initial commit.",
+      "Career history rendered as a commit log: newest first, across enterprise backend, instruction, and technical leadership.",
+    education:
+      "Bachelor of Computer Engineering at Dokuz Eylül University, completed with an honor degree.",
     research:
       "Research at the intersection of anomaly detection, explainability and locally hosted LLMs.",
     skills: "The toolchain I reach for when designing, building and operating systems.",
+  },
+  education: {
+    honor: "Honor Degree",
+    coursework: "Coursework",
+  },
+  chat: {
+    open: "Ask MCB.ai (Gemini 3.8)",
+    close: "Close chat",
+    clear: "Clear chat",
+    title: "MCB.ai",
+    telemetry: "Gemini 3.8 / 3.5 Lite",
+    modelPrimary: "Gemini 3.8",
+    modelFallback: "Gemini 3.5 Lite",
+    placeholder: "Ask about the portfolio…",
+    send: "Send",
+    inputLabel: "Message to MCB.ai",
+    suggestionsLabel: "Suggested questions",
+    suggestions: {
+      experience: "Sun Group & Turkcell Experience",
+      c4isr: "Teknofest C4ISR Architecture",
+      stack: "Core Backend & AI Stack",
+    },
+    responding: "MCB.ai is responding",
+    error: "The assistant could not complete that reply. Try again in a moment.",
+    rateLimited: "Too many questions in a short window. Wait a minute and try again.",
+    unavailable: "MCB.ai is temporarily unavailable.",
   },
   projects: {
     featured: "Featured",

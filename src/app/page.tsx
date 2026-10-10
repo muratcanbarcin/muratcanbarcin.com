@@ -1,6 +1,8 @@
+import { MuratCanAIChat } from "@/components/ai/MuratCanAIChat";
 import { Footer } from "@/components/common/Footer";
 import { Navbar } from "@/components/common/Navbar";
 import { TerminalModal } from "@/components/common/TerminalModal";
+import { EducationSection } from "@/components/sections/EducationSection";
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { ProjectShowcase } from "@/components/sections/ProjectShowcase";
@@ -13,13 +15,15 @@ export default function Home() {
       <Navbar />
       <main className="mx-auto max-w-6xl space-y-24 px-4 py-12 sm:px-6 lg:px-8">
         <HeroSection />
-        <ProjectShowcase />
         <ExperienceSection />
+        <EducationSection />
+        <ProjectShowcase />
         <ResearchSection />
         <SkillsSection />
       </main>
       <Footer />
       <TerminalModal />
+      <MuratCanAIChat />
     </>
   );
 }

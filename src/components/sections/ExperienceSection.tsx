@@ -2,7 +2,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
-import type { Education, Experience } from "@/types";
+import type { Experience } from "@/types";
 import { portfolioData } from "@/data/portfolioData";
 import { useLocale } from "@/hooks/useLocale";
 import { SectionHeader } from "@/components/common/SectionHeader";
@@ -11,7 +11,7 @@ import { formatYearMonth, monthsBetweenInclusive } from "@/lib/date";
 import { shortHash } from "@/lib/hash";
 import { cn } from "@/lib/utils";
 
-const { experiences, education } = portfolioData;
+const { experiences } = portfolioData;
 
 export function ExperienceSection() {
   const { t } = useLocale();
@@ -19,7 +19,7 @@ export function ExperienceSection() {
   return (
     <section id="experience" aria-labelledby="experience-title" className="scroll-mt-24">
       <SectionHeader
-        index="02"
+        index="01"
         command="git log --graph --oneline career"
         title={t("sections.experience")}
         description={t("sectionIntros.experience")}
@@ -32,9 +32,6 @@ export function ExperienceSection() {
         />
         {experiences.map((experience, index) => (
           <ExperienceCommit key={experience.id} experience={experience} isHead={index === 0} />
-        ))}
-        {education.map((entry) => (
-          <EducationCommit key={entry.institution} education={entry} />
         ))}
       </ol>
     </section>
@@ -159,50 +156,6 @@ function ExperienceCommit({ experience, isHead }: { experience: Experience; isHe
             </ul>
           )}
         </footer>
-      )}
-    </CommitShell>
-  );
-}
-
-function EducationCommit({ education }: { education: Education }) {
-  const { t, localize } = useLocale();
-
-  return (
-    <CommitShell
-      hash={shortHash(education.institution)}
-      refLabel={`tag: ${t("experience.rootCommit")}`}
-      meta={education.period}
-    >
-      <header className="flex flex-col gap-1.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-semibold tracking-tight text-zinc-100 sm:text-lg">
-            {localize(education.degree)}
-          </h3>
-          <span className="rounded-md border border-zinc-800 bg-zinc-950/60 px-1.5 py-px font-mono text-[10px] text-zinc-400">
-            {t("experience.education")}
-          </span>
-        </div>
-        <p className="text-sm text-zinc-200">{education.institution}</p>
-      </header>
-
-      <dl className="flex flex-wrap gap-2 font-mono text-[11px]">
-        <div className="flex gap-1.5 rounded-md border border-zinc-800 bg-zinc-950/60 px-2 py-1">
-          <dt className="text-zinc-500">{t("common.gpa")}</dt>
-          <dd className="text-zinc-200">
-            {education.gpa}
-            <span className="text-zinc-600"> / {education.maxGpa}</span>
-          </dd>
-        </div>
-        {education.honors && (
-          <div className="flex rounded-md border border-emerald-500/20 bg-emerald-500/5 px-2 py-1 text-emerald-300">
-            <dt className="sr-only">{t("common.highlights")}</dt>
-            <dd>{localize(education.honors)}</dd>
-          </div>
-        )}
-      </dl>
-
-      {education.coursework && education.coursework.length > 0 && (
-        <TechTagList items={education.coursework} label={t("common.highlights")} />
       )}
     </CommitShell>
   );
