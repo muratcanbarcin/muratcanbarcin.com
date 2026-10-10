@@ -1,12 +1,23 @@
+import { Footer } from "@/components/common/Footer";
+import { Navbar } from "@/components/common/Navbar";
+import { ExperienceSection } from "@/components/sections/ExperienceSection";
+import { HeroSection } from "@/components/sections/HeroSection";
+import { ProjectShowcase } from "@/components/sections/ProjectShowcase";
+import { ResearchSection } from "@/components/sections/ResearchSection";
+import { SkillsSection } from "@/components/sections/SkillsSection";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-6 text-zinc-100">
-      <p className="max-w-2xl text-center font-mono text-xs leading-relaxed tracking-tight text-zinc-400 sm:text-sm">
-        <span className="text-emerald-400">[SYSTEM_STATUS: INITIALIZED]</span>{" "}
-        <span className="text-zinc-600">{"//"}</span>{" "}
-        <span className="text-zinc-100">Murat Can Barçin</span> — Software
-        Engineer (Backend &amp; AI)
-      </p>
-    </main>
+    <>
+      <Navbar />
+      <main className="mx-auto max-w-6xl space-y-24 px-4 py-12 sm:px-6 lg:px-8">
+        <HeroSection />
+        <ProjectShowcase />
+        <ExperienceSection />
+        <ResearchSection />
+        <SkillsSection />
+      </main>
+      <Footer />
+    </>
   );
 }

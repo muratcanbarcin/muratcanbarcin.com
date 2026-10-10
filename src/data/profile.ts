@@ -11,6 +11,16 @@ export const profile: Profile = {
     en: "Honor Computer Engineering graduate dedicated to architecting scalable backend systems, applied AI solutions, and IoT integrations. Brings corporate engineering experience from leading companies such as Turkcell and Sun Group, complemented by technical instructor experience at techcareer.net and a robust portfolio of diverse projects. Aims to blend technical expertise with strong interpersonal and leadership skills to develop high-quality, scalable products that create tangible real-world value.",
     tr: "Ölçeklenebilir backend mimarileri, yapay zeka çözümleri ve IoT entegrasyonları geliştirmeye odaklanan onur dereceli Bilgisayar Mühendisliği mezunu. Turkcell ve Sun Group gibi şirketlerde edindiği kurumsal geliştirme deneyimini; techcareer.net bünyesindeki teknik eğitmenlik tecrübesi ve başarıyla hayata geçirdiği projelerle zenginleştirmektedir. Teknik uzmanlığını güçlü sosyal ve liderlik becerileriyle harmanlayarak; gerçek dünyada somut değer yaratan, yüksek kaliteli ve ölçeklenebilir ürünler geliştirmeyi hedeflemektedir.",
   },
+  valueProposition: {
+    en: "I architect scalable backend systems, ship applied AI pipelines and push inference to the edge — from an AI expense SaaS processing 1M+ documents a month at Sun Group and subscription APIs at Turkcell to a TEKNOFEST-finalist Edge AI C4ISR prototype.",
+    tr: "Ölçeklenebilir backend sistemleri tasarlıyor, uygulamalı yapay zeka pipeline'ları geliştiriyor ve çıkarımı uca (edge) taşıyorum — Sun Group'ta ayda 1M+ belge işleyen yapay zeka destekli masraf SaaS'ından Turkcell'deki abonelik API'lerine ve TEKNOFEST finalisti Edge AI tabanlı C4ISR prototipine kadar.",
+  },
+  credentials: [
+    { en: "DEU Honor Graduate", tr: "DEÜ Onur Mezunu" },
+    { en: "Sun Group", tr: "Sun Group" },
+    { en: "Turkcell", tr: "Turkcell" },
+    { en: "TEKNOFEST Finalist", tr: "TEKNOFEST Finalisti" },
+  ],
   socials: [
     { platform: "github", url: "https://github.com/muratcanbarcin", handle: "muratcanbarcin" },
     {
@@ -30,39 +40,64 @@ export const profile: Profile = {
 
 export const skills: readonly SkillGroup[] = [
   {
-    id: "languages",
-    label: { en: "Programming Languages", tr: "Programlama Dilleri" },
-    skills: ["Java", "Python", "JavaScript", "C#", "MATLAB"],
+    id: "backend-systems",
+    label: { en: "Backend Systems", tr: "Backend Sistemleri" },
+    description: {
+      en: "Service design, APIs and enterprise integrations.",
+      tr: "Servis tasarımı, API'ler ve kurumsal entegrasyonlar.",
+    },
+    icon: "server",
+    skills: [
+      "Java",
+      "Spring Boot",
+      "Python",
+      "FastAPI",
+      "RESTful API Design",
+      "Microservices Architecture",
+      "JavaScript",
+      "C#",
+    ],
   },
   {
-    id: "frameworks",
-    label: { en: "Frameworks & Web Technologies", tr: "Frameworks & Web Teknolojileri" },
-    skills: ["Spring Boot", "FastAPI", "RESTful API Design", "Microservices Architecture"],
-  },
-  {
-    id: "ai-iot",
-    label: { en: "AI & IoT", tr: "Yapay Zeka & IoT" },
+    id: "ai-edge",
+    label: { en: "AI & Edge", tr: "Yapay Zeka & Edge" },
+    description: {
+      en: "Applied models, computer vision and on-device inference.",
+      tr: "Uygulamalı modeller, bilgisayarlı görü ve cihaz üzerinde çıkarım.",
+    },
+    icon: "cpu",
     skills: [
       "LLM Integration & Training",
       "Computer Vision (OpenCV)",
       "Edge Computing",
       "Raspberry Pi",
       "Data Fusion",
+      "MATLAB",
     ],
   },
   {
-    id: "databases",
-    label: { en: "Database Management", tr: "Veritabanı Yönetimi" },
+    id: "databases-data",
+    label: { en: "Databases & Data", tr: "Veritabanları & Veri" },
+    description: {
+      en: "Relational modelling, persistence and data access layers.",
+      tr: "İlişkisel modelleme, kalıcılık ve veri erişim katmanları.",
+    },
+    icon: "database",
     skills: ["SQL", "MySQL", "PostgreSQL", "Hibernate/JPA", "Relational Database Design"],
   },
   {
-    id: "engineering",
-    label: { en: "Software Engineering", tr: "Yazılım Mühendisliği" },
+    id: "software-architecture",
+    label: { en: "Software Architecture", tr: "Yazılım Mimarisi" },
+    description: {
+      en: "Fundamentals that keep systems maintainable at scale.",
+      tr: "Sistemleri ölçekte sürdürülebilir kılan temeller.",
+    },
+    icon: "layers",
     skills: [
-      "Data Structures & Algorithms",
-      "Object-Oriented Programming (OOP)",
-      "Design Patterns",
       "System Design",
+      "Design Patterns",
+      "Object-Oriented Programming (OOP)",
+      "Data Structures & Algorithms",
     ],
   },
 ];

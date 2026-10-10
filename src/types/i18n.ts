@@ -1,6 +1,7 @@
 import type { CertificationCategory } from "./certification";
 import type { EmploymentType } from "./experience";
 import type { ProjectCategory, ProjectStatus } from "./project";
+import type { ProjectLinkType } from "./media";
 
 export interface Dictionary {
   meta: {
@@ -13,8 +14,11 @@ export interface Dictionary {
     experience: string;
     projects: string;
     publications: string;
+    research: string;
+    skills: string;
     certifications: string;
     contact: string;
+    primary: string;
     openMenu: string;
     closeMenu: string;
   };
@@ -31,6 +35,8 @@ export interface Dictionary {
   terminal: {
     open: string;
     close: string;
+    /** Supports a `{shortcut}` placeholder. */
+    shortcutHint: string;
     title: string;
     prompt: string;
     placeholder: string;
@@ -58,8 +64,11 @@ export interface Dictionary {
     sourceCode: string;
     liveDemo: string;
     readPaper: string;
+    viewDoi: string;
     viewCredential: string;
-    downloadCv: string;
+    requestResume: string;
+    requestFullResume: string;
+    exploreProjects: string;
     contactMe: string;
     backToTop: string;
   };
@@ -71,6 +80,35 @@ export interface Dictionary {
     certifications: string;
     skills: string;
   };
+  sectionIntros: {
+    projects: string;
+    experience: string;
+    research: string;
+    skills: string;
+  };
+  projects: {
+    featured: string;
+    architectureTab: string;
+    mediaTab: string;
+    /** Supports a `{count}` placeholder. */
+    pipelineStages: string;
+    mediaPending: string;
+    placeholderCaption: string;
+    /** Supports `{index}` and `{total}` placeholders. */
+    showMedia: string;
+    linkTypes: Record<ProjectLinkType, string>;
+  };
+  experience: {
+    education: string;
+    rootCommit: string;
+    proofs: string;
+  };
+  research: {
+    authors: string;
+    abstract: string;
+    /** Supports a `{date}` placeholder. */
+    submitted: string;
+  };
   common: {
     present: string;
     techStack: string;
@@ -78,12 +116,19 @@ export interface Dictionary {
     highlights: string;
     gpa: string;
     comingSoon: string;
+    /** Supports a `{count}` placeholder (month count). */
+    duration: string;
+    readMore: string;
+    showLess: string;
+    links: string;
   };
   footer: {
     /** Supports `{year}` and `{name}` placeholders. */
     copyright: string;
     builtWith: string;
     viewSource: string;
+    contactTitle: string;
+    contactPitch: string;
   };
 }
 

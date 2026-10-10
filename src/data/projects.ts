@@ -188,7 +188,7 @@ export const projects: readonly Project[] = [
     media: [],
     links: [],
     status: "completed",
-    featured: true,
+    featured: false,
   },
   {
     id: "sleepflow-ai",

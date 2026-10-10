@@ -33,9 +33,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={cn("dark", geistSans.variable, jetbrainsMono.variable)}
+      data-scroll-behavior="smooth"
+      className={cn(
+        "dark scroll-smooth motion-reduce:scroll-auto",
+        geistSans.variable,
+        jetbrainsMono.variable,
+      )}
     >
-      <body className="min-h-dvh">
+      <body className="min-h-dvh overflow-x-clip">
         <LocaleProvider>{children}</LocaleProvider>
       </body>
     </html>
