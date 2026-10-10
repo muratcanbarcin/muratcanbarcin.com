@@ -7,6 +7,7 @@ import { portfolioData } from "@/data/portfolioData";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useLocale } from "@/hooks/useLocale";
 import { AvailabilityBadge } from "@/components/common/AvailabilityBadge";
+import { ContactInquiryForm } from "./ContactInquiryForm";
 import { GitHubIcon, LinkedInIcon } from "@/components/common/BrandIcons";
 import { RequestResumeButton } from "@/components/common/RequestResumeButton";
 import { SectionHeader } from "@/components/common/SectionHeader";
@@ -55,6 +56,9 @@ export function ContactSection() {
       />
 
       <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <li className="md:col-span-2">
+          <ContactInquiryForm />
+        </li>
         <li className="md:col-span-2">
           <article className={cn(CARD_CLASSES, "h-full justify-between gap-6")}>
             <h3 className="font-mono text-[11px] tracking-wider text-zinc-500 uppercase">{t("contact.emailLabel")}</h3>
