@@ -10,6 +10,13 @@ export interface Period {
   end: string | "Present";
 }
 
+/** A scannable outcome that only makes sense next to the role it came from. */
+export interface ExperienceMetric {
+  id: string;
+  figure: string;
+  label: LocalizedString;
+}
+
 export interface Experience {
   id: string;
   role: LocalizedString;
@@ -20,5 +27,7 @@ export interface Experience {
   period: Period;
   highlights: Localized<string[]>;
   techStack: string[];
+  /** Figures and outcomes rendered on the role card, not in a detached strip. */
+  metrics?: readonly ExperienceMetric[];
   proofs?: ProofLink[];
 }

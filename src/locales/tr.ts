@@ -85,7 +85,7 @@ export const tr: Dictionary = {
       "Part-time": "Yarı zamanlı",
       Internship: "Staj",
       Instructor: "Eğitmen",
-      Leadership: "Liderlik",
+      Leadership: "Topluluk",
     },
   },
   cta: {
@@ -116,11 +116,11 @@ export const tr: Dictionary = {
   },
   console: {
     title: "MCB.ai",
-    badge: "Birleşik Mühendislik Konsolu",
-    ready: "hazır",
-    welcome: "Tek kabuk. Düz metinle sorun ya da /help, /projects, /whoami çalıştırın.",
-    routingHint: "Düz metin MCB.ai'ye sorar · /komut burada, anında çalışır",
-    placeholder: "MCB.ai'ye sorun veya /help çalıştırın",
+    statusOnline: "AI Çevrimiçi",
+    modeHint: "Tam görünüm için ~ · CLI için /help yazın",
+    welcome:
+      "Merhaba! Ben Murat Can'ın yapay zeka modeliyim. Murat Can hakkında bana dilediğinizi sorabilirsiniz.",
+    placeholder: "MCB.ai'ye bir soru sorun (örn: 'deneyimlerini anlat')...",
     inputLabel: "Konsol girdisi",
     outputLabel: "Konsol dökümü",
     send: "Gönder",
@@ -128,7 +128,6 @@ export const tr: Dictionary = {
     expand: "Odak moduna geç ({shortcut})",
     collapse: "Odak modundan çık",
     suggestionsLabel: "Öneriler",
-    suggestionsHint: "Birine dokunun; soru sorar veya komut çalıştırır. Bunlar yanıt değil.",
     responding: "MCB.ai yanıtlıyor",
     errors: {
       generic: "Asistan bu yanıtı tamamlayamadı. Biraz sonra yeniden deneyin.",
@@ -213,11 +212,11 @@ export const tr: Dictionary = {
     tenureLabel: "İş deneyimi",
     tenureYear: "{count} yıl",
     tenureYears: "{count} yıl",
-    leadership: "Liderlik",
-    leadershipNote: "Öğrenci kulübü liderliği. İş deneyiminden ayrı tutulur.",
+    leadership: "Topluluk deneyimleri",
   },
   research: {
     authors: "Yazarlar",
+    academic: "Akademisyen",
     abstract: "Özet",
     submitted: "Gönderim: {date}",
   },

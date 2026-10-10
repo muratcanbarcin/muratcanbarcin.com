@@ -82,13 +82,13 @@ export function ProjectCard({ project }: { project: Project }) {
         <ul aria-label={t("common.keyMetrics")} className="flex flex-wrap gap-2">
           {project.keyMetrics.map((metric) => (
             <li
-              key={metric}
+              key={metric.en}
               className="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-950/70 px-2 py-1 font-mono text-[11px] text-zinc-200"
             >
               <span aria-hidden="true" className="text-emerald-400">
                 ▸
               </span>
-              {metric}
+              {localize(metric)}
             </li>
           ))}
         </ul>

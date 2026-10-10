@@ -26,7 +26,7 @@ export interface Project {
   category: ProjectCategory;
   summary: LocalizedString;
   description: LocalizedString;
-  keyMetrics: string[];
+  keyMetrics: LocalizedString[];
   techStack: string[];
   architectureFlow: ArchitectureStep[];
   media: MediaAsset[];

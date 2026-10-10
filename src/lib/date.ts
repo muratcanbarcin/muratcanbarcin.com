@@ -61,8 +61,8 @@ export function monthsBetweenInclusive(start: string, end: string): number | nul
   return months > 0 ? months : null;
 }
 
-/** Nearest whole year. 28 months is 2 years; partial years are not shown as "1 year 5 months". */
+/** Whole years, rounded up. 17 months (1 year 5 months) is 2 years; an exact multiple stays put. */
 export function roundedYearCount(totalMonths: number): number {
   if (totalMonths <= 0) return 0;
-  return Math.max(1, Math.round(totalMonths / 12));
+  return Math.ceil(totalMonths / 12);
 }

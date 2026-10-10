@@ -13,8 +13,16 @@ import { cn } from "@/lib/utils";
 
 const { profile } = portfolioData;
 
+/** Splits "Role (Focus)" so the focus clause can carry its own accent without duplicating copy. */
+function splitHeadline(headline: string): { role: string; focus: string | null } {
+  const match = headline.match(/^(.*?)\s*(\([^)]+\))\s*$/);
+  if (!match?.[1] || !match[2]) return { role: headline, focus: null };
+  return { role: match[1], focus: match[2] };
+}
+
 export function HeroSection() {
   const { t, localize } = useLocale();
+  const { role, focus } = splitHeadline(localize(profile.headline));
 
   return (
     <section id="top" aria-labelledby="hero-title" className="relative scroll-mt-24 pt-2 sm:pt-8">
@@ -35,7 +43,15 @@ export function HeroSection() {
             >
               {profile.name}
             </h1>
-            <p className="font-mono text-base text-zinc-400 sm:text-lg">{localize(profile.headline)}</p>
+            <p className="text-xl font-semibold tracking-tight text-balance text-zinc-100 sm:text-2xl md:text-3xl">
+              {role}
+              {focus ? (
+                <>
+                  {" "}
+                  <span className="font-mono text-lg font-medium text-emerald-400 sm:text-xl">{focus}</span>
+                </>
+              ) : null}
+            </p>
             <AvailabilityBadge className="mt-1" />
           </div>
 

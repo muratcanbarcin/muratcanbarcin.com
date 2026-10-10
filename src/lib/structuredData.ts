@@ -3,7 +3,7 @@ import { experiences } from "@/data/experiences";
 import { profile } from "@/data/profile";
 import { publications } from "@/data/publications";
 import { siteConfig } from "@/data/site";
-import type { EmploymentType, Experience, Publication } from "@/types";
+import type { EmploymentType, Experience, Publication, PublicationAuthor } from "@/types";
 
 export type JsonLdValue = string | number | boolean | JsonLdNode | readonly JsonLdValue[];
 
@@ -43,10 +43,10 @@ function toEmployeeRole(experience: Experience): JsonLdNode {
   };
 }
 
-function toAuthor(author: string): JsonLdNode {
-  return author.endsWith(ownerSurname)
+function toAuthor(author: PublicationAuthor): JsonLdNode {
+  return author.name.endsWith(ownerSurname)
     ? { "@type": "Person", "@id": PERSON_ID, name: profile.name }
-    : { "@type": "Person", name: author };
+    : { "@type": "Person", name: author.name, jobTitle: author.academic ? "Academic" : undefined };
 }
 
 function toScholarlyArticle(publication: Publication): JsonLdNode {

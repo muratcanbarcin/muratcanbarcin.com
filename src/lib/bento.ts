@@ -17,7 +17,7 @@ export function contentWeight(project: Project): number {
     project.architectureFlow.length * STEP_WEIGHT +
     stepText +
     project.summary.en.length +
-    project.keyMetrics.join("").length
+    project.keyMetrics.reduce((sum, metric) => sum + metric.en.length, 0)
   );
 }
 

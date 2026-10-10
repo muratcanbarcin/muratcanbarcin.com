@@ -3,7 +3,7 @@
 import { ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Experience } from "@/types";
-import { careerHighlights, isProfessionalRole } from "@/data/experiences";
+import { isProfessionalRole } from "@/data/experiences";
 import { portfolioData } from "@/data/portfolioData";
 import { useLocale } from "@/hooks/useLocale";
 import { SectionHeader } from "@/components/common/SectionHeader";
@@ -41,35 +41,22 @@ interface CommitShellProps {
 }
 
 function ExperienceSummary() {
-  const { t, localize } = useLocale();
+  const { t } = useLocale();
   const work = experiences.filter(isProfessionalRole);
   const months = work.reduce((total, experience) => {
     if (experience.period.end === "Present") return total;
     return total + (monthsBetweenInclusive(experience.period.start, experience.period.end) ?? 0);
   }, 0);
   const years = roundedYearCount(months);
-  const companies = [...new Set(work.map((experience) => experience.company))].join(" · ");
 
   return (
-    <div className="mb-8 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/40">
-      <div className="flex flex-col gap-3 border-b border-zinc-800/80 px-5 py-5 sm:flex-row sm:items-end sm:justify-between sm:px-6">
-        <div>
-          <p className="font-mono text-[11px] tracking-wider text-zinc-500 uppercase">{t("experience.tenureLabel")}</p>
-          <p className="mt-1 font-mono text-3xl font-semibold tracking-tight text-zinc-50">
-            {t(years === 1 ? "experience.tenureYear" : "experience.tenureYears", { count: years })}
-          </p>
-        </div>
-        <p className="max-w-md text-sm text-zinc-400">{companies}</p>
-      </div>
-      <ul className="grid sm:grid-cols-2 lg:grid-cols-4">
-        {careerHighlights.map((item) => (
-          <li key={item.id} className="flex flex-col gap-1 border-t border-zinc-800/80 px-5 py-4 sm:px-6">
-            <p className="font-mono text-xl font-semibold tracking-tight text-emerald-300">{item.figure}</p>
-            <p className="text-sm text-zinc-200">{localize(item.label)}</p>
-            <p className="font-mono text-[11px] text-zinc-500">{localize(item.context)}</p>
-          </li>
-        ))}
-      </ul>
+    <div className="mb-8 flex w-fit max-w-full items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-900/50 py-3 pr-5 pl-4">
+      <span aria-hidden="true" className="h-10 w-1 shrink-0 rounded-full bg-emerald-400" />
+      <p className="font-mono text-3xl font-semibold tracking-tight text-zinc-50">
+        {t(years === 1 ? "experience.tenureYear" : "experience.tenureYears", { count: years })}
+      </p>
+      <span aria-hidden="true" className="h-8 w-px bg-zinc-800" />
+      <p className="font-mono text-[11px] tracking-wider text-zinc-500 uppercase">{t("experience.tenureLabel")}</p>
     </div>
   );
 }
@@ -100,10 +87,7 @@ function LeadershipList({ experiences: items }: { experiences: readonly Experien
 
   return (
     <div className="mt-12 flex flex-col gap-5">
-      <div className="flex flex-col gap-1 pl-9">
-        <h3 className="font-mono text-[11px] tracking-wider text-zinc-500 uppercase">{t("experience.leadership")}</h3>
-        <p className="text-sm text-zinc-500">{t("experience.leadershipNote")}</p>
-      </div>
+      <h3 className="pl-9 font-mono text-[11px] tracking-wider text-zinc-500 uppercase">{t("experience.leadership")}</h3>
       <ExperienceList experiences={items} markHead={false} />
     </div>
   );
@@ -186,6 +170,17 @@ function ExperienceCommit({ experience, isHead }: { experience: Experience; isHe
           {experience.location}
         </p>
       </header>
+
+      {experience.metrics && experience.metrics.length > 0 && (
+        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]">
+          {experience.metrics.map((metric) => (
+            <li key={metric.id} className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2.5">
+              <p className="font-mono text-lg font-semibold tracking-tight text-emerald-300">{metric.figure}</p>
+              <p className="mt-0.5 text-xs leading-snug text-zinc-400">{localize(metric.label)}</p>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <ul aria-label={t("common.highlights")} className="flex flex-col gap-2">
         {localize(experience.highlights).map((highlight) => (

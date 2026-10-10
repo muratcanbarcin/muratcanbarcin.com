@@ -15,14 +15,17 @@ export const projects: readonly Project[] = [
     },
     category: "defense-edge",
     summary: {
-      en: "TEKNOFEST finalist. A polyglot microservices C4ISR prototype that fuses multi-source sensor data at the edge for real-time situational awareness and threat detection.",
-      tr: "TEKNOFEST finalisti. Gerçek zamanlı durumsal farkındalık ve tehdit algılama için çok kaynaklı sensör verilerini uçta birleştiren polyglot mikroservis tabanlı bir C4ISR prototipi.",
+      en: "A polyglot microservices C4ISR prototype that fuses multi-source sensor data at the edge for real-time situational awareness and threat detection.",
+      tr: "Gerçek zamanlı durumsal farkındalık ve tehdit algılama için çok kaynaklı sensör verilerini uçta birleştiren polyglot mikroservis tabanlı bir C4ISR prototipi.",
     },
     description: {
       en: "Architected a polyglot microservices system for a lightweight C4ISR prototype, using Java and Python services to ensure modularity, scalability, and robust system design. Implemented multi-source data fusion algorithms on Raspberry Pi 5 with AI Cameras, enabling real-time Edge AI processing for immediate situational awareness and threat detection. Developed a decision support interface that visualizes fused sensor data on tactical maps, managing the development lifecycle via Agile methodologies and Jira.",
       tr: "Modülerlik, ölçeklenebilirlik ve güçlü bir sistem tasarımı sağlamak amacıyla Java ve Python servislerini kullanan, hafif bir C4ISR (askeri karar destek sistemi) prototipi için polyglot bir mikroservis sistemi tasarlandı. Anlık durumsal farkındalık ve tehdit algılama sağlamak amacıyla, Raspberry Pi 5 ve Yapay Zeka kameraları üzerinde gerçek zamanlı Edge AI işlemeyi mümkün kılan çok kaynaklı veri füzyonu algoritmaları uygulandı. Geliştirme yaşam döngüsü Agile metodolojiler ve Jira ile yönetilerek, füzyonlanmış sensör verilerini taktik haritalar üzerinde görselleştiren bir karar destek arayüzü geliştirildi.",
     },
-    keyMetrics: ["TEKNOFEST Finalist", "Real-time Edge AI", "Multi-source data fusion"],
+    keyMetrics: [
+      { en: "Real-time edge AI", tr: "Gerçek zamanlı uçta yapay zeka" },
+      { en: "Multi-source data fusion", tr: "Çok kaynaklı veri füzyonu" },
+    ],
     techStack: [
       "Java",
       "Python",
@@ -96,7 +99,11 @@ export const projects: readonly Project[] = [
       en: 'Engineered an AI microservice (Python, FastAPI) for the "Expense" B2B SaaS that extracts financial data from receipts and invoices, achieving sub-10s processing and a monthly capacity of 1M+ financial documents. Developed the backend architecture and multi-level approval workflows using Java and Spring Boot, completing the system\'s integration with corporate structures such as SAP.',
       tr: '"Expense" isimli B2B SaaS için fiş ve faturalardan finansal verileri çıkaran yapay zeka mikroservisi (Python, FastAPI) geliştirildi; 10 sn altı işlem süresiyle aylık 1 Milyon+ finansal belge kapasitesi sağlandı. Java ve Spring Boot kullanılarak backend mimarisi ile çok aşamalı onay akışları geliştirildi ve sistemin SAP gibi kurumsal yapılarla entegrasyonu tamamlandı.',
     },
-    keyMetrics: ["< 10s / document", "1M+ documents / month", "SAP integration"],
+    keyMetrics: [
+      { en: "Receipt or invoice in under 10 seconds", tr: "Fiş ve fatura 10 saniyenin altında" },
+      { en: "Capacity for over 1 million documents a month", tr: "Ayda 1 milyondan fazla fiş ve fatura kapasitesi" },
+      { en: "Approvals synced to SAP", tr: "Onaylar SAP ile eşitlenir" },
+    ],
     techStack: ["Python", "FastAPI", "Java", "Spring Boot", "SAP"],
     architectureFlow: [
       {
@@ -152,7 +159,11 @@ export const projects: readonly Project[] = [
       en: "Developed a Risk-Based Access Control (RBAC) system using Spring Boot and React, integrating AI to automate secure Single Sign-On approvals. Engineered a Python FastAPI microservice using the Isolation Forest algorithm to detect real-time access anomalies and calculate dynamic risk scores. Integrated n8n workflows to orchestrate automated security escalations for high-risk requests and containerized the architecture using Docker.",
       tr: "Single Sign-On (SSO) onaylarını otomatikleştirmek için yapay zekayı entegre eden, Spring Boot ve React tabanlı bir Risk Tabanlı Erişim Kontrolü (RBAC) sistemi geliştirildi. Gerçek zamanlı erişim anormalliklerini tespit etmek ve dinamik risk skorlarını hesaplamak için Isolation Forest algoritmasını kullanan bir Python FastAPI mikroservisi tasarlandı. Yüksek riskli istekler için otomatik güvenlik eskalasyon süreçlerini yönetmek amacıyla n8n iş akışları entegre edildi ve mimari Docker ile ayağa kaldırıldı.",
     },
-    keyMetrics: ["Real-time anomaly detection", "Dynamic risk scoring", "Automated escalation"],
+    keyMetrics: [
+      { en: "Real-time anomaly detection", tr: "Gerçek zamanlı anomali tespiti" },
+      { en: "Dynamic risk scoring", tr: "Dinamik risk puanı" },
+      { en: "Automated escalation", tr: "Otomatik eskalasyon" },
+    ],
     techStack: ["Java", "Spring Boot", "React", "Python", "FastAPI", "Isolation Forest", "MySQL", "n8n", "Docker"],
     architectureFlow: [
       {
@@ -208,7 +219,11 @@ export const projects: readonly Project[] = [
       en: "Built an AI-powered platform merging smartwatch biometrics and Raspberry Pi vision data to generate personalized sleep insights using Google Gemini. Engineered a FastAPI data fusion pipeline synchronizing HealthKit metrics with real-time OpenCV logs via custom matching algorithms. Implemented real-time edge computing for position detection and visualized actionable metrics on a React dashboard.",
       tr: "Akıllı saat biyometrik verilerini ve Raspberry Pi görüntü verilerini birleştirerek Google Gemini entegresi ile kişiselleştirilmiş uyku analizleri üreten yapay zeka destekli bir platform inşa edildi. HealthKit metriklerini, özel eşleştirme algoritmaları aracılığıyla gerçek zamanlı OpenCV loglarıyla senkronize eden bir FastAPI veri füzyonu pipeline'ı tasarlandı. Pozisyon tespiti için gerçek zamanlı edge computing uygulandı ve eyleme dönüştürülebilir metrikler bir React kontrol panelinde görselleştirildi.",
     },
-    keyMetrics: ["Biometric + vision fusion", "Real-time edge position detection", "LLM-generated insights"],
+    keyMetrics: [
+      { en: "Biometric and vision fusion", tr: "Biyometri ve görüntü füzyonu" },
+      { en: "Real-time edge position detection", tr: "Uçta gerçek zamanlı pozisyon tespiti" },
+      { en: "LLM-generated insights", tr: "Dil modeli ile üretilen analizler" },
+    ],
     techStack: ["Python", "FastAPI", "React", "Google Gemini", "OpenCV", "Swift", "HealthKit", "MySQL", "Raspberry Pi"],
     architectureFlow: [
       {
@@ -274,7 +289,7 @@ export const projects: readonly Project[] = [
       en: "Architected a scalable accommodation platform using RESTful APIs and a token-based reward system. Engineered core full-stack modules including secure messaging, booking engines, and authentication.",
       tr: "RESTful API'ler ve token tabanlı bir ödül sistemi kullanılarak ölçeklenebilir bir konaklama platformu tasarlandı. Güvenli mesajlaşma, rezervasyon motorları ve kimlik doğrulama dahil olmak üzere temel full-stack modüller geliştirildi.",
     },
-    keyMetrics: ["Incubated at T3 Startup Center", "Token-based rewards"],
+    keyMetrics: [{ en: "Token-based rewards", tr: "Token tabanlı ödül" }],
     techStack: ["Node.js", "Express.js", "React", "MySQL", "RESTful APIs"],
     architectureFlow: [
       {

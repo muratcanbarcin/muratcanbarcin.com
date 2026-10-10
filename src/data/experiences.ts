@@ -1,4 +1,4 @@
-import type { Experience, LocalizedString } from "@/types";
+import type { Experience } from "@/types";
 
 export const experiences: readonly Experience[] = [
   {
@@ -22,6 +22,23 @@ export const experiences: readonly Experience[] = [
       ],
     },
     techStack: ["Python", "FastAPI", "Java", "Spring Boot", "SAP Integration"],
+    metrics: [
+      {
+        id: "throughput",
+        figure: "1M+",
+        label: { en: "AI receipt & invoice processing / month", tr: "ayda AI ile fiş ve fatura işleme" },
+      },
+      {
+        id: "latency",
+        figure: "<10s",
+        label: { en: "AI analysis per receipt or invoice", tr: "AI ile tek fiş veya fatura analizi" },
+      },
+      {
+        id: "sap",
+        figure: "SAP",
+        label: { en: "production ERP integration", tr: "canlıya alınan ERP entegrasyonu" },
+      },
+    ],
   },
   {
     id: "techcareer",
@@ -45,6 +62,18 @@ export const experiences: readonly Experience[] = [
       ],
     },
     techStack: ["Backend Development", "SQL", "Data Science"],
+    metrics: [
+      {
+        id: "tracks",
+        figure: "3",
+        label: { en: "separate bootcamp instructorships", tr: "ayrı bootcamp eğitmenliği" },
+      },
+      {
+        id: "cohort",
+        figure: "100+",
+        label: { en: "university-level+ students in each", tr: "her birinde üniversite seviyesi+ öğrenci" },
+      },
+    ],
   },
   {
     id: "turkcell",
@@ -70,6 +99,18 @@ export const experiences: readonly Experience[] = [
       ],
     },
     techStack: ["Java", "Spring Boot", "PostgreSQL", "RESTful APIs", "Test Automation"],
+    metrics: [
+      {
+        id: "scripts",
+        figure: "50+",
+        label: { en: "Sardis automation scripts", tr: "Sardis otomasyon senaryosu" },
+      },
+      {
+        id: "spring",
+        figure: "Spring",
+        label: { en: "subscription & payment services", tr: "abonelik ve ödeme servisleri" },
+      },
+    ],
   },
   {
     id: "gdsc-deu",
@@ -90,44 +131,23 @@ export const experiences: readonly Experience[] = [
       ],
     },
     techStack: [],
+    metrics: [
+      {
+        id: "events",
+        figure: "20+",
+        label: { en: "events and hackathons", tr: "etkinlik ve hackathon" },
+      },
+      {
+        id: "ecothon",
+        figure: "Ecothon",
+        label: { en: "largest SDG hackathon in the Aegean", tr: "Ege'nin en büyük SKA hackathonu" },
+      },
+    ],
     proofs: [{ title: "Ecothon İzmir", url: "https://ecothonizmir.com" }],
   },
 ];
 
-/** Club and community roles stay on the page, outside the employment timeline. */
+/** Community roles stay on the page, outside the employment timeline. */
 export function isProfessionalRole(experience: Experience): boolean {
   return experience.type !== "Leadership";
 }
-
-/** Figures already stated in the roles and the TEKNOFEST finalist project. */
-export const careerHighlights: readonly {
-  id: string;
-  figure: string;
-  label: LocalizedString;
-  context: LocalizedString;
-}[] = [
-  {
-    id: "throughput",
-    figure: "1M+",
-    label: { en: "financial documents / month", tr: "finansal belge / ay" },
-    context: { en: "Expense extraction · Sun Group", tr: "Belge çıkarımı · Sun Group" },
-  },
-  {
-    id: "latency",
-    figure: "<10s",
-    label: { en: "per document", tr: "belge başına" },
-    context: { en: "FastAPI extraction service", tr: "FastAPI çıkarım servisi" },
-  },
-  {
-    id: "automation",
-    figure: "50+",
-    label: { en: "automation scripts", tr: "otomasyon senaryosu" },
-    context: { en: "Sardis · Turkcell", tr: "Sardis · Turkcell" },
-  },
-  {
-    id: "teknofest",
-    figure: "Finalist",
-    label: { en: "TEKNOFEST", tr: "TEKNOFEST" },
-    context: { en: "Lightweight C4ISR prototype", tr: "Hafif C4ISR prototipi" },
-  },
-];

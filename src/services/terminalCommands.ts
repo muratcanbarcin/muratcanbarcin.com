@@ -160,7 +160,7 @@ const RENDERERS: Record<TerminalCommandName, (context: TerminalContext) => Termi
           tone: project.featured ? "accent" : "default",
         },
         { label: "", text: localize(project.subtitle, locale), tone: "muted" },
-        { label: "", text: project.keyMetrics.join(" · "), tone: "muted" },
+        { label: "", text: project.keyMetrics.map((metric) => localize(metric, locale)).join(" · "), tone: "muted" },
       ]),
     ];
   },

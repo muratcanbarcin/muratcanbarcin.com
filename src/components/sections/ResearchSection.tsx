@@ -131,10 +131,19 @@ function PublicationCard({ publication }: { publication: Publication }) {
             <ul className="flex flex-col gap-1 text-sm">
               {publication.authors.map((author) => (
                 <li
-                  key={author}
-                  className={author.includes(OWN_SURNAME) ? "font-medium text-zinc-100" : "text-zinc-400"}
+                  key={author.name}
+                  className={
+                    author.name.includes(OWN_SURNAME)
+                      ? "font-medium text-zinc-100"
+                      : "flex flex-wrap items-center gap-x-2 gap-y-1 text-zinc-400"
+                  }
                 >
-                  {author}
+                  <span>{author.name}</span>
+                  {author.academic && (
+                    <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-1.5 py-px font-mono text-[10px] tracking-wide text-amber-200 uppercase">
+                      {t("research.academic")}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

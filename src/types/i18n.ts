@@ -91,10 +91,11 @@ export interface Dictionary {
   };
   console: {
     title: string;
-    badge: string;
-    ready: string;
+    /** Live status beside the console title. */
+    statusOnline: string;
+    /** Compact header hint for focus mode and slash commands. */
+    modeHint: string;
     welcome: string;
-    routingHint: string;
     placeholder: string;
     inputLabel: string;
     outputLabel: string;
@@ -104,8 +105,6 @@ export interface Dictionary {
     expand: string;
     collapse: string;
     suggestionsLabel: string;
-    /** Shown under the label so the chips read as prompts, not as console output. */
-    suggestionsHint: string;
     responding: string;
     errors: Record<ChatErrorKind, string>;
   };
@@ -185,10 +184,11 @@ export interface Dictionary {
     tenureYear: string;
     tenureYears: string;
     leadership: string;
-    leadershipNote: string;
   };
   research: {
     authors: string;
+    /** Faculty co-author, distinct from student collaborators. */
+    academic: string;
     abstract: string;
     /** Supports a `{date}` placeholder. */
     submitted: string;

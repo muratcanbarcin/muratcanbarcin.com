@@ -10,11 +10,12 @@ import { useLocale } from "@/hooks/useLocale";
 import { isCommandInput } from "@/services/consoleRouter";
 import { renderCommandOutput, type TerminalContext } from "@/services/terminalCommands";
 import { ChatMarkdown } from "@/components/ai/ChatMarkdown";
-import { AvailabilityBadge } from "@/components/common/AvailabilityBadge";
 import { cn } from "@/lib/utils";
 import { TerminalOutput } from "./TerminalOutput";
 
 const INPUT_MAX_CHARS = 4_000;
+const ASSISTANT_BUBBLE =
+  "rounded-2xl rounded-tl-md border border-zinc-800 bg-zinc-900/80 px-3.5 py-3 text-sm leading-relaxed break-words text-zinc-200";
 
 interface ConsolePanelProps {
   session: UnifiedConsoleSession;
@@ -83,19 +84,22 @@ export function ConsolePanel({
         className,
       )}
     >
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-zinc-800 pr-1 pl-4">
-        <span aria-hidden="true" className="relative flex size-2 shrink-0">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-50 motion-reduce:animate-none" />
-          <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
-        </span>
-        <h2 id={titleId} className="min-w-0 flex-1 truncate font-mono text-xs">
-          <span className="font-semibold text-zinc-100">{t("console.title")}</span>
-          <span aria-hidden="true" className="text-zinc-600">
-            {" // "}
-          </span>
-          <span className="sr-only"> — </span>
-          <span className="text-zinc-400">{t("console.badge")}</span>
-        </h2>
+      <header className="flex shrink-0 items-center gap-2 border-b border-zinc-800 py-2 pr-1 pl-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <h2 id={titleId} className="shrink-0 font-mono text-sm font-semibold tracking-tight text-zinc-100">
+              {t("console.title")}
+            </h2>
+            <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 font-mono text-[10px] tracking-wide text-emerald-300 uppercase">
+              <span aria-hidden="true" className="relative flex size-1.5 shrink-0">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:animate-none" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
+              </span>
+              {t("console.statusOnline")}
+            </span>
+          </div>
+          <p className="truncate font-mono text-[10px] text-zinc-500 sm:text-right">{t("console.modeHint")}</p>
+        </div>
         {session.entries.length > 0 && (
           <button
             type="button"
@@ -121,10 +125,6 @@ export function ConsolePanel({
         </button>
       </header>
 
-      <p className="shrink-0 truncate border-b border-zinc-800/70 px-4 py-2 font-mono text-[11px] text-zinc-500">
-        {t("console.routingHint")}
-      </p>
-
       <div
         ref={scrollerRef}
         className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-4"
@@ -134,17 +134,10 @@ export function ConsolePanel({
         </p>
 
         {session.entries.length === 0 && (
-          <div className="flex flex-col items-start gap-3">
-            <p className="font-mono text-xs text-zinc-500">
-              <span className="text-emerald-400/80">mcb.ai</span> {t("console.ready")}
-              <span
-                aria-hidden="true"
-                className="ml-1 inline-block h-3.5 w-1.5 translate-y-0.5 animate-blink bg-emerald-400/80 motion-reduce:animate-none"
-              />
-            </p>
-            <p className="text-sm text-zinc-400">{t("console.welcome")}</p>
-            <AvailabilityBadge />
-          </div>
+          <article className="flex max-w-[95%] flex-col items-start gap-1.5">
+            <p className="font-mono text-[11px] font-medium text-emerald-400">{t("console.title")}</p>
+            <p className={ASSISTANT_BUBBLE}>{t("console.welcome")}</p>
+          </article>
         )}
 
         {session.entries.map((entry) => (
@@ -158,11 +151,11 @@ export function ConsolePanel({
         )}
       </div>
 
-      <div className="shrink-0 border-t border-zinc-800">
-        <form onSubmit={submit} className="flex items-end gap-2 px-3 pt-3 pb-2">
-          <span aria-hidden="true" className="flex h-11 shrink-0 items-center font-mono text-[11px] text-emerald-400">
-            {t("terminal.prompt")}
-          </span>
+      <div className="shrink-0 border-t border-zinc-800 px-3 py-3">
+        <form
+          onSubmit={submit}
+          className="flex items-end gap-2 rounded-lg border border-zinc-700/80 bg-zinc-900/90 p-2.5 transition-colors focus-within:border-emerald-500/60"
+        >
           <label htmlFor={inputId} className="sr-only">
             {t("console.inputLabel")}
           </label>
@@ -179,26 +172,21 @@ export function ConsolePanel({
             autoComplete="off"
             autoCapitalize={commandLike ? "none" : "sentences"}
             spellCheck={!commandLike}
-            className={cn(
-              "max-h-28 min-h-11 flex-1 resize-none bg-transparent py-2.5 font-mono text-base text-zinc-100 caret-emerald-400 outline-none placeholder:text-zinc-600 sm:text-sm",
-            )}
+            className="max-h-28 min-h-11 flex-1 resize-none bg-transparent py-2 font-mono text-base text-zinc-100 caret-emerald-400 outline-none placeholder:text-zinc-500 sm:text-sm"
           />
           <button
             type="submit"
             aria-label={t("console.send")}
             disabled={!canSubmit}
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-950 outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-zinc-400/60 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-950 outline-none transition-shadow hover:bg-white hover:shadow-[0_0_18px_rgb(16_185_129/0.45)] focus-visible:ring-2 focus-visible:ring-emerald-400/60 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
           >
             <ArrowUp aria-hidden="true" className="size-4" />
           </button>
         </form>
 
-        <div className="flex flex-col gap-1.5 px-3 pb-3">
-          <p className="font-mono text-[10px] tracking-wider text-zinc-400 uppercase">{t("console.suggestionsLabel")}</p>
-          <p className="text-[11px] leading-snug text-zinc-500">{t("console.suggestionsHint")}</p>
         <ul
           aria-label={t("console.suggestionsLabel")}
-          className="flex gap-2 overflow-x-auto [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden"
+          className="mt-2.5 flex gap-2 overflow-x-auto [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden"
         >
           {chips.map((chip) => (
             <li key={chip.id} className="shrink-0">
@@ -206,19 +194,13 @@ export function ConsolePanel({
                 type="button"
                 disabled={chip.kind === "query" && isStreaming}
                 onClick={() => onChip(chip)}
-                className="inline-flex h-11 items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/50 px-3 font-mono text-[11px] whitespace-nowrap text-zinc-400 outline-none transition-colors hover:border-zinc-700 hover:text-zinc-100 focus-visible:ring-2 focus-visible:ring-zinc-400/60 disabled:cursor-not-allowed disabled:opacity-50 lg:h-8"
+                className="inline-flex h-11 items-center gap-1.5 rounded-full border border-zinc-800 px-3 text-xs whitespace-nowrap text-zinc-400 outline-none transition-all hover:border-emerald-500/50 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:ring-2 focus-visible:ring-emerald-400/50 disabled:cursor-not-allowed disabled:opacity-50 lg:h-8"
               >
-                {chip.kind === "command" && (
-                  <span aria-hidden="true" className="text-emerald-400/80">
-                    $
-                  </span>
-                )}
                 {localize(chip.label)}
               </button>
             </li>
           ))}
         </ul>
-        </div>
       </div>
     </section>
   );
@@ -229,29 +211,29 @@ function TranscriptEntry({ entry, context }: { entry: ConsoleEntry; context: Ter
 
   if (entry.kind === "user") {
     return (
-      <p className="flex gap-2 font-mono text-[13px] leading-6 break-all">
-        <span aria-hidden="true" className="shrink-0 text-emerald-400">
-          {t("terminal.prompt")}
-        </span>
-        <span className="text-zinc-100">{entry.content}</span>
+      <p className="ml-auto max-w-[90%] rounded-2xl rounded-tr-md bg-zinc-100 px-3.5 py-2.5 text-sm leading-relaxed break-words text-zinc-950">
+        {entry.content}
       </p>
     );
   }
 
   if (entry.kind === "assistant") {
     return (
-      <article className="max-w-full pl-1 text-sm leading-relaxed break-words text-zinc-300">
-        {entry.content ? (
-          <ChatMarkdown content={entry.content} />
-        ) : (
-          <span className="inline-flex items-center gap-2 font-mono text-xs text-zinc-500">
-            <span
-              aria-hidden="true"
-              className="size-1.5 animate-pulse rounded-full bg-emerald-400 motion-reduce:animate-none"
-            />
-            {t("console.responding")}
-          </span>
-        )}
+      <article className="flex max-w-[95%] flex-col items-start gap-1.5">
+        <p className="font-mono text-[11px] font-medium text-emerald-400">{t("console.title")}</p>
+        <div className={ASSISTANT_BUBBLE}>
+          {entry.content ? (
+            <ChatMarkdown content={entry.content} />
+          ) : (
+            <span className="inline-flex items-center gap-2 font-mono text-xs text-zinc-500">
+              <span
+                aria-hidden="true"
+                className="size-1.5 animate-pulse rounded-full bg-emerald-400 motion-reduce:animate-none"
+              />
+              {t("console.responding")}
+            </span>
+          )}
+        </div>
       </article>
     );
   }

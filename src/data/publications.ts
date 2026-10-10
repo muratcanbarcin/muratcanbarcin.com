@@ -5,7 +5,10 @@ export const publications: readonly Publication[] = [
     id: "metaverse-financial-anomaly-detection",
     title:
       "A Dual-Layer Financial Anomaly Detection and Automated Forensic Reporting Framework for Metaverse Economies",
-    authors: ["M. C. Barçin", "F. Dalkılıç"],
+    authors: [
+      { name: "M. C. Barçin" },
+      { name: "Feriştah Dalkılıç", academic: true },
+    ],
     journal: "Journal of Metaverse",
     status: { en: "Under Review", tr: "İnceleme Aşamasında" },
     submissionDate: "2026-07",
@@ -18,7 +21,12 @@ export const publications: readonly Publication[] = [
   {
     id: "c4isr-edge-fusion",
     title: "A Polyglot Microservices Architecture for Real-Time Edge Data Fusion in a Lightweight C4ISR Prototype",
-    authors: ["M. C. Barçin", "Prof. Dr. Semih Utku", "Emirhan Güler", "Sarp Deniz Topaloğlu"],
+    authors: [
+      { name: "M. C. Barçin" },
+      { name: "Prof. Dr. Semih Utku", academic: true },
+      { name: "Emirhan Güler" },
+      { name: "Sarp Deniz Topaloğlu" },
+    ],
     journal: "Working manuscript",
     status: { en: "In Preparation", tr: "Hazırlık Aşamasında" },
     abstract: {

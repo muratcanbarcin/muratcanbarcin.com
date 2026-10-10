@@ -261,7 +261,7 @@ function buildSystemPrompt(data: PortfolioData): string {
     lines.push(`  Summary: ${bilingual(project.summary)}`);
     lines.push(`  Detail EN: ${project.description.en}`);
     lines.push(`  Detail TR: ${project.description.tr}`);
-    lines.push(`  Metrics: ${project.keyMetrics.join("; ")}`);
+    lines.push(`  Metrics: ${project.keyMetrics.map((metric) => bilingual(metric)).join("; ")}`);
     lines.push(`  Stack: ${project.techStack.join(", ")}`);
     if (project.architectureFlow.length > 0) {
       const flow = project.architectureFlow
@@ -275,7 +275,7 @@ function buildSystemPrompt(data: PortfolioData): string {
   for (const publication of data.publications) {
     const submitted = publication.submissionDate ? ` | submitted ${publication.submissionDate}` : "";
     lines.push(
-      `- "${publication.title}" | ${publication.authors.join(", ")} | ${publication.journal} | ${bilingual(publication.status)}${submitted}`,
+      `- "${publication.title}" | ${publication.authors.map((author) => (author.academic ? `${author.name} (academic)` : author.name)).join(", ")} | ${publication.journal} | ${bilingual(publication.status)}${submitted}`,
     );
     lines.push(`  Abstract: ${bilingual(publication.abstract)}`);
     lines.push(`  Key tech: ${publication.keyTech.join(", ")}`);

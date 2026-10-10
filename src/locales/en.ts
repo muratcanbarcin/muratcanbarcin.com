@@ -85,7 +85,7 @@ export const en: Dictionary = {
       "Part-time": "Part-time",
       Internship: "Internship",
       Instructor: "Instructor",
-      Leadership: "Leadership",
+      Leadership: "Community",
     },
   },
   cta: {
@@ -116,11 +116,11 @@ export const en: Dictionary = {
   },
   console: {
     title: "MCB.ai",
-    badge: "Unified Engineering Console",
-    ready: "ready",
-    welcome: "One shell. Ask in plain language, or run /help, /projects, /whoami.",
-    routingHint: "Plain language asks MCB.ai · /command runs here, instantly",
-    placeholder: "Ask MCB.ai, or run /help",
+    statusOnline: "AI Online",
+    modeHint: "Press ~ for full view · Type /help for CLI",
+      welcome:
+        "Hello! I'm Murat Can's AI model. Ask me anything about Murat Can.",
+    placeholder: "Ask MCB.ai a question (e.g., 'tell me about his experience')...",
     inputLabel: "Console input",
     outputLabel: "Console transcript",
     send: "Send",
@@ -128,7 +128,6 @@ export const en: Dictionary = {
     expand: "Enter focus mode ({shortcut})",
     collapse: "Exit focus mode",
     suggestionsLabel: "Suggestions",
-    suggestionsHint: "Tap one to ask or run a command. These are prompts, not replies.",
     responding: "MCB.ai is responding",
     errors: {
       generic: "The assistant could not complete that reply. Try again in a moment.",
@@ -213,11 +212,11 @@ export const en: Dictionary = {
     tenureLabel: "Professional experience",
     tenureYear: "{count} year",
     tenureYears: "{count} years",
-    leadership: "Leadership",
-    leadershipNote: "Student-club leadership. Kept separate from employment.",
+    leadership: "Community",
   },
   research: {
     authors: "Authors",
+    academic: "Academic",
     abstract: "Abstract",
     submitted: "Submitted {date}",
   },
