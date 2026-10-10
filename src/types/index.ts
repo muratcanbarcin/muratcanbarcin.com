@@ -1,0 +1,10 @@
+export type * from "./locale";
+export type * from "./media";
+export type * from "./project";
+export type * from "./experience";
+export type * from "./publication";
+export type * from "./education";
+export type * from "./certification";
+export type * from "./profile";
+export type * from "./i18n";
+export type * from "./portfolio";
