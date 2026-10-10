@@ -4,7 +4,7 @@ import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import type { SectionId } from "@/types";
 import { portfolioData } from "@/data/portfolioData";
 import { useLocale } from "@/hooks/useLocale";
-import { RequestResumeLink } from "./RequestResumeLink";
+import { RequestResumeButton } from "./RequestResumeButton";
 import { SocialLinks } from "./SocialLinks";
 import { TerminalTrigger } from "./TerminalTrigger";
 import { cn } from "@/lib/utils";
@@ -77,7 +77,7 @@ export function MobileMenu({ id, isOpen, onClose, activeSection, shortcutLabel }
 
               <div className="flex flex-col gap-3">
                 <TerminalTrigger shortcutLabel={shortcutLabel} onTrigger={onClose} className="w-full sm:hidden" />
-                <RequestResumeLink intent="primary" size="lg" onClick={onClose} className="w-full md:hidden" />
+                <RequestResumeButton intent="primary" size="lg" onClick={onClose} className="w-full md:hidden" />
               </div>
 
               <SocialLinks />

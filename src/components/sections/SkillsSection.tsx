@@ -24,7 +24,6 @@ export function SkillsSection() {
         index="05"
         command="cat ./stack.yaml"
         title={t("sections.skills")}
-        description={t("sectionIntros.skills")}
         titleId="skills-title"
       />
       <ul className="grid gap-px overflow-hidden rounded-xl border border-zinc-800 bg-zinc-800 md:grid-cols-2">

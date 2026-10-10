@@ -1,10 +1,16 @@
+import type { LocalizedString } from "./locale";
+
 /**
- * The resume is shared on request only — never as a public file — so the site exposes a
- * prefilled email intent instead of a download link.
+ * The resume is shared on request only — never as a public file — so visitors submit an in-app
+ * request instead of downloading a PDF.
  */
-export interface MailtoTemplate {
-  recipient: string;
-  subject: string;
-  /** Joined with CRLF line breaks; an empty string renders a blank line. */
-  bodyLines: readonly string[];
+export interface ContactDetails {
+  email: string;
+  workMode: LocalizedString;
 }
+
+export type ResumeRequestField = "email" | "company" | "message";
+
+export type ResumeRequestPayload = Record<ResumeRequestField, string>;
+
+export type ResumeRequestOutcome = "received" | "invalid" | "rate-limited" | "error";

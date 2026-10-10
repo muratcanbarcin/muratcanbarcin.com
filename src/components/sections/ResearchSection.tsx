@@ -26,7 +26,6 @@ export function ResearchSection() {
         index="04"
         command="cat ./research/*.md"
         title={t("sections.publications")}
-        description={t("sectionIntros.research")}
         titleId="research-title"
       />
       <ul className="flex flex-col gap-4">

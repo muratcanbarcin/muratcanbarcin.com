@@ -1,6 +1,6 @@
 import type { PortfolioData } from "@/types";
 import { certifications } from "./certifications";
-import { resumeRequest, sourceRepositoryUrl } from "./contact";
+import { contact, sourceRepositoryUrl } from "./contact";
 import { education } from "./education";
 import { experiences } from "./experiences";
 import { navigation } from "./navigation";
@@ -17,6 +17,6 @@ export const portfolioData: PortfolioData = {
   certifications,
   skills,
   navigation,
-  resumeRequest,
+  contact,
   sourceRepositoryUrl,
 };

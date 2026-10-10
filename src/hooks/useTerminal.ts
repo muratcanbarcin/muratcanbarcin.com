@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { TerminalEntry } from "@/types";
-import { getResumeRequestHref } from "@/services/resumeRequest";
+import { requestResumeModalOpen } from "@/services/resumeRequest";
 import { completeCommand, getCommandEffect, longestCommonPrefix } from "@/services/terminalCommands";
 
 export type HistoryDirection = "older" | "newer";
@@ -46,7 +46,10 @@ export function useTerminal({ onClose }: { onClose: () => void }): TerminalSessi
     const id = nextId.current++;
     setEntries((previous) => [...previous, { id, kind: "command", input: command }]);
     if (effect === "close") onClose();
-    if (effect === "request-resume") window.location.assign(getResumeRequestHref());
+    if (effect === "request-resume") {
+      onClose();
+      requestResumeModalOpen();
+    }
   }, [clear, input, onClose]);
 
   const navigateHistory = useCallback(

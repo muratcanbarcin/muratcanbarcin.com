@@ -16,7 +16,6 @@ export function EducationSection() {
         index="02"
         command="cat ./education.json"
         title={t("sections.education")}
-        description={t("sectionIntros.education")}
         titleId="education-title"
       />
       <ul className="flex flex-col gap-4">

@@ -1,7 +1,8 @@
-import { MuratCanAIChat } from "@/components/ai/MuratCanAIChat";
 import { Footer } from "@/components/common/Footer";
 import { Navbar } from "@/components/common/Navbar";
+import { RequestResumeModal } from "@/components/common/RequestResumeModal";
 import { TerminalModal } from "@/components/common/TerminalModal";
+import { ContactSection } from "@/components/sections/ContactSection";
 import { EducationSection } from "@/components/sections/EducationSection";
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
 import { HeroSection } from "@/components/sections/HeroSection";
@@ -20,10 +21,11 @@ export default function Home() {
         <ProjectShowcase />
         <ResearchSection />
         <SkillsSection />
+        <ContactSection />
       </main>
       <Footer />
       <TerminalModal />
-      <MuratCanAIChat />
+      <RequestResumeModal />
     </>
   );
 }

@@ -24,16 +24,6 @@ export interface Dictionary {
     openMenu: string;
     closeMenu: string;
   };
-  hero: {
-    status: string;
-    availability: string;
-    roleTag: string;
-    focusTags: {
-      backend: string;
-      ai: string;
-      iot: string;
-    };
-  };
   terminal: {
     open: string;
     close: string;
@@ -61,8 +51,6 @@ export interface Dictionary {
       email: string;
     };
     resumeOpening: string;
-    /** Supports an `{email}` placeholder. */
-    resumeFallback: string;
   };
   github: {
     latestPush: string;
@@ -86,7 +74,6 @@ export interface Dictionary {
     viewDoi: string;
     viewCredential: string;
     requestResume: string;
-    requestFullResume: string;
     exploreProjects: string;
     contactMe: string;
     backToTop: string;
@@ -98,26 +85,19 @@ export interface Dictionary {
     education: string;
     certifications: string;
     skills: string;
-  };
-  sectionIntros: {
-    projects: string;
-    experience: string;
-    education: string;
-    research: string;
-    skills: string;
+    contact: string;
   };
   education: {
     honor: string;
     coursework: string;
   };
   chat: {
-    open: string;
-    close: string;
-    clear: string;
     title: string;
-    telemetry: string;
-    modelPrimary: string;
-    modelFallback: string;
+    badge: string;
+    welcome: string;
+    expand: string;
+    collapse: string;
+    clear: string;
     placeholder: string;
     send: string;
     inputLabel: string;
@@ -131,6 +111,41 @@ export interface Dictionary {
     error: string;
     rateLimited: string;
     unavailable: string;
+  };
+  resumeModal: {
+    title: string;
+    subtitle: string;
+    close: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    companyLabel: string;
+    companyPlaceholder: string;
+    messageLabel: string;
+    messagePlaceholder: string;
+    optional: string;
+    submit: string;
+    submitting: string;
+    successTitle: string;
+    /** Supports an `{email}` placeholder. */
+    success: string;
+    done: string;
+    errors: {
+      email: string;
+      company: string;
+      /** Supports a `{max}` placeholder. */
+      message: string;
+      rateLimited: string;
+      generic: string;
+    };
+  };
+  contact: {
+    emailLabel: string;
+    copyEmail: string;
+    copied: string;
+    copyFailed: string;
+    resumeTitle: string;
+    resumeBody: string;
+    locationLabel: string;
   };
   projects: {
     featured: string;
@@ -173,8 +188,6 @@ export interface Dictionary {
     copyright: string;
     builtWith: string;
     viewSource: string;
-    contactTitle: string;
-    contactPitch: string;
   };
 }
 

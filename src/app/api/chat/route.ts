@@ -64,7 +64,6 @@ export async function POST(request: Request) {
       headers: {
         "Cache-Control": "no-store",
         "X-Accel-Buffering": "no",
-        "X-MCB-Model": result.modelId,
       },
       stream: createTokenStream(result.text),
     });

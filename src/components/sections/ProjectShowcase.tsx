@@ -24,7 +24,6 @@ export function ProjectShowcase() {
         index="03"
         command="ls ./projects --sort=impact"
         title={t("sections.projects")}
-        description={t("sectionIntros.projects")}
         titleId="projects-title"
       />
       <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-12">

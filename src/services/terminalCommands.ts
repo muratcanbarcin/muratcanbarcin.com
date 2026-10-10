@@ -88,7 +88,6 @@ const RENDERERS: Record<TerminalCommandName, (context: TerminalContext) => Termi
       { text: profile.name, tone: "heading" },
       { label: labels.role, text: localize(profile.headline, locale) },
       { label: labels.location, text: profile.location },
-      { label: labels.status, text: dictionary.hero.availability, tone: "success" },
       BLANK_LINE,
       { text: localize(profile.valueProposition, locale), tone: "muted" },
     ];
@@ -136,13 +135,7 @@ const RENDERERS: Record<TerminalCommandName, (context: TerminalContext) => Termi
       href: social.url,
     })),
 
-  resume: ({ dictionary }) => [
-    { text: dictionary.terminal.resumeOpening, tone: "success" },
-    {
-      text: interpolate(dictionary.terminal.resumeFallback, { email: portfolioData.resumeRequest.recipient }),
-      tone: "muted",
-    },
-  ],
+  resume: ({ dictionary }) => [{ text: dictionary.terminal.resumeOpening, tone: "success" }],
 
   clear: () => [],
   exit: () => [],

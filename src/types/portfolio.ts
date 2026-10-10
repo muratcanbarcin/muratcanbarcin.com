@@ -1,5 +1,5 @@
 import type { Certification } from "./certification";
-import type { MailtoTemplate } from "./contact";
+import type { ContactDetails } from "./contact";
 import type { Education } from "./education";
 import type { Experience } from "./experience";
 import type { NavItem } from "./navigation";
@@ -16,6 +16,6 @@ export interface PortfolioData {
   certifications: readonly Certification[];
   skills: readonly SkillGroup[];
   navigation: readonly NavItem[];
-  resumeRequest: MailtoTemplate;
+  contact: ContactDetails;
   sourceRepositoryUrl: string;
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent, MouseEvent } from "react";
+import type { KeyboardEvent } from "react";
 import type { TerminalLine, TerminalTone } from "@/types";
 import { useLocale } from "@/hooks/useLocale";
+import { useModalDialog } from "@/hooks/useModalDialog";
 import { useTerminal } from "@/hooks/useTerminal";
 import { subscribeToTerminalOpen } from "@/services/terminalEvents";
 import { renderCommandOutput, renderWelcome, type TerminalContext } from "@/services/terminalCommands";
@@ -26,9 +27,9 @@ export function TerminalModal() {
   const close = useCallback(() => setIsOpen(false), []);
   const terminal = useTerminal({ onClose: close });
 
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
+  const { dialogRef, onBackdropClick } = useModalDialog({ isOpen, onClose: close, initialFocusRef: inputRef });
 
   const context = useMemo<TerminalContext>(
     () => ({ dictionary, locale: currentLocale }),
@@ -36,36 +37,6 @@ export function TerminalModal() {
   );
 
   useEffect(() => subscribeToTerminalOpen(() => setIsOpen(true)), []);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (isOpen && !dialog.open) {
-      dialog.showModal();
-      inputRef.current?.focus();
-    } else if (!isOpen && dialog.open) {
-      dialog.close();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const root = document.documentElement;
-    const previousOverflow = root.style.overflow;
-    root.style.overflow = "hidden";
-
-    const handleEscape = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      close();
-    };
-    window.addEventListener("keydown", handleEscape);
-
-    return () => {
-      root.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [isOpen, close]);
 
   useEffect(() => {
     const output = outputRef.current;
@@ -88,10 +59,6 @@ export function TerminalModal() {
     }
   };
 
-  const handleDialogClick = (event: MouseEvent<HTMLDialogElement>) => {
-    if (event.target === event.currentTarget) close();
-  };
-
   const focusInputUnlessSelecting = () => {
     if (!window.getSelection()?.toString()) inputRef.current?.focus();
   };
@@ -107,7 +74,7 @@ export function TerminalModal() {
       ref={dialogRef}
       aria-labelledby="terminal-title"
       onClose={close}
-      onClick={handleDialogClick}
+      onClick={onBackdropClick}
       className={cn(
         "m-auto h-[min(34rem,calc(100dvh-2rem))] w-[calc(100%-1.5rem)] max-w-3xl overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/90 p-0 text-zinc-300 shadow-2xl shadow-black/60 backdrop-blur-xl",
         "backdrop:bg-zinc-950/60 backdrop:backdrop-blur-sm",

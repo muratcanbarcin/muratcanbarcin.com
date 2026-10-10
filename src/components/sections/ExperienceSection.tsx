@@ -22,7 +22,6 @@ export function ExperienceSection() {
         index="01"
         command="git log --graph --oneline career"
         title={t("sections.experience")}
-        description={t("sectionIntros.experience")}
         titleId="experience-title"
       />
       <ol className="relative flex flex-col gap-6">

@@ -10,7 +10,7 @@ import { actionVariants } from "@/components/ui/action";
 import { LanguageToggle } from "./LanguageToggle";
 import { MobileMenu } from "./MobileMenu";
 import { Monogram } from "./Monogram";
-import { RequestResumeLink } from "./RequestResumeLink";
+import { RequestResumeButton } from "./RequestResumeButton";
 import { TerminalTrigger } from "./TerminalTrigger";
 import { cn } from "@/lib/utils";
 
@@ -61,7 +61,7 @@ export function Navbar() {
         <div className="flex items-center gap-1.5 sm:gap-2">
           <LanguageToggle />
           <TerminalTrigger shortcutLabel={shortcutLabel} className="hidden sm:inline-flex" />
-          <RequestResumeLink intent="primary" className="hidden md:inline-flex" />
+          <RequestResumeButton intent="primary" className="hidden md:inline-flex" />
           <button
             type="button"
             onClick={menu.toggle}

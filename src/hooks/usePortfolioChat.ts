@@ -9,22 +9,20 @@ export interface ChatMessage extends ChatTurn {
 
 export type ChatErrorKind = "rate" | "generic" | null;
 
-interface UsePortfolioChatResult {
+export interface PortfolioChat {
   messages: readonly ChatMessage[];
   input: string;
   setInput: (value: string) => void;
   status: "idle" | "streaming" | "error";
-  activeModelId: string | null;
   errorKind: ChatErrorKind;
   send: (content: string) => Promise<void>;
   clear: () => void;
 }
 
-export function usePortfolioChat(): UsePortfolioChatResult {
+export function usePortfolioChat(): PortfolioChat {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [status, setStatus] = useState<UsePortfolioChatResult["status"]>("idle");
-  const [activeModelId, setActiveModelId] = useState<string | null>(null);
+  const [status, setStatus] = useState<PortfolioChat["status"]>("idle");
   const [errorKind, setErrorKind] = useState<ChatErrorKind>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inflight = useRef(false);
@@ -38,7 +36,6 @@ export function usePortfolioChat(): UsePortfolioChatResult {
     setMessages([]);
     setInput("");
     setStatus("idle");
-    setActiveModelId(null);
     setErrorKind(null);
   }, []);
 
@@ -76,9 +73,6 @@ export function usePortfolioChat(): UsePortfolioChatResult {
         setStatus("error");
         return;
       }
-
-      const modelId = response.headers.get("X-MCB-Model");
-      if (modelId) setActiveModelId(modelId);
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -124,5 +118,5 @@ export function usePortfolioChat(): UsePortfolioChatResult {
     }
   }, [messages]);
 
-  return { messages, input, setInput, status, activeModelId, errorKind, send, clear };
+  return { messages, input, setInput, status, errorKind, send, clear };
 }
