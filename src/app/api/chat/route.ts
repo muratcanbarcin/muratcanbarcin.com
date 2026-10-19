@@ -1,5 +1,7 @@
 import { createTextStreamResponse } from "ai";
 import { z } from "zod";
+import { digestKey } from "@/lib/digest";
+import { inferLocale, isLocale } from "@/lib/i18n";
 import { chatRateLimiter, readClientAddress } from "@/lib/rateLimit";
 import { createTokenStream, streamPortfolioChat } from "@/services/aiService";
 
@@ -24,6 +26,7 @@ const chatRequestSchema = z
       )
       .min(1)
       .max(16),
+    locale: z.enum(["en", "tr"]).optional(),
   })
   .refine((body) => body.messages.at(-1)?.role === "user", {
     path: ["messages"],
@@ -64,7 +67,18 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await streamPortfolioChat(parsed.data.messages.slice(-MESSAGE_WINDOW));
+    const messages = parsed.data.messages.slice(-MESSAGE_WINDOW);
+    const userPrompt = messages.at(-1)?.content ?? "";
+    const locale = isLocale(parsed.data.locale) ? parsed.data.locale : inferLocale(userPrompt);
+    const address = readClientAddress(request);
+    const ipHash = address === "unknown" ? null : digestKey(address);
+    const sessionId = digestKey(`${address}|${new Date().toISOString().slice(0, 10)}`);
+    const result = await streamPortfolioChat(messages, undefined, undefined, {
+      sessionId,
+      userPrompt,
+      locale,
+      ipHash,
+    });
     return createTextStreamResponse({
       headers: {
         "Cache-Control": "no-store",

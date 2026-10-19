@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import type { ChatErrorKind, ConsoleEntry, ConsoleStatus, TerminalEffect } from "@/types";
+import { useLocale } from "@/hooks/useLocale";
 import { streamChatReply } from "@/services/chatClient";
 import { completeConsoleInput, routeConsoleInput, toChatTurns } from "@/services/consoleRouter";
 import { getCommandEffect } from "@/services/terminalCommands";
@@ -43,6 +44,7 @@ export function useUnifiedConsole({ onEffect }: { onEffect: (effect: ConsoleSide
   const requestId = useRef(0);
   const inflight = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+  const { currentLocale } = useLocale();
 
   const clear = useCallback(() => {
     requestId.current += 1;
@@ -98,6 +100,7 @@ export function useUnifiedConsole({ onEffect }: { onEffect: (effect: ConsoleSide
 
       void streamChatReply(turns, {
         signal: controller.signal,
+        locale: currentLocale,
         onText: (text) => {
           if (requestId.current === request) writeAssistant(text);
         },
@@ -112,7 +115,7 @@ export function useUnifiedConsole({ onEffect }: { onEffect: (effect: ConsoleSide
         setStatus("idle");
       });
     },
-    [entries],
+    [currentLocale, entries],
   );
 
   const run = useCallback(

@@ -1,4 +1,4 @@
-import type { ChatErrorKind, ChatTurn } from "@/types";
+import type { ChatErrorKind, ChatTurn, Locale } from "@/types";
 
 /** Slightly above the route's `maxDuration`, which already covers the server-side model failover. */
 const RESPONSE_TIMEOUT_MS = 32_000;
@@ -13,12 +13,13 @@ export type ChatStreamResult =
 interface StreamChatOptions {
   signal: AbortSignal;
   onText: (content: string) => void;
+  locale?: Locale;
 }
 
 /** Streams one MCB.ai reply. A watchdog aborts stalled requests so the UI never waits indefinitely. */
 export async function streamChatReply(
   turns: readonly ChatTurn[],
-  { signal, onText }: StreamChatOptions,
+  { signal, onText, locale }: StreamChatOptions,
 ): Promise<ChatStreamResult> {
   const watchdog = new AbortController();
   let timer = setTimeout(() => watchdog.abort(), RESPONSE_TIMEOUT_MS);
@@ -32,7 +33,7 @@ export async function streamChatReply(
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "text/plain" },
-      body: JSON.stringify({ messages: turns }),
+      body: JSON.stringify({ messages: turns, locale }),
       signal: AbortSignal.any([signal, watchdog.signal]),
     });
     if (!response.ok || !response.body) return { status: "failed", kind: errorKindFor(response.status), content };

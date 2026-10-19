@@ -2,6 +2,7 @@ import { readClientAddress, resumeRequestRateLimiter } from "@/lib/rateLimit";
 import { collectInvalidFields, resumeRequestSchema } from "@/lib/resumeRequestSchema";
 import { sendResumeRequestNotification } from "@/services/emailService";
 import { recordResumeRequest } from "@/services/resumeRequestInbox";
+import { formatResumeAlert, sendTelegramAlert } from "@/services/telegramService";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
@@ -28,6 +29,8 @@ export async function POST(request: Request) {
       { status: 400, headers: NO_STORE },
     );
   }
+
+  sendTelegramAlert(formatResumeAlert({ company: parsed.data.company, email: parsed.data.email }));
 
   try {
     await recordResumeRequest(parsed.data);

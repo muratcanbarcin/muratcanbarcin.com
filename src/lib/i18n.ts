@@ -8,6 +8,11 @@ export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
 }
 
+/** Turkish-specific letters decide the log locale when the client does not send one. */
+export function inferLocale(text: string): Locale {
+  return /[çğıöşüÇĞİÖŞÜ]/.test(text) ? "tr" : "en";
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }

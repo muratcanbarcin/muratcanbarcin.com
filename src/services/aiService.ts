@@ -2,7 +2,18 @@ import { APICallError, streamText, type ModelMessage } from "ai";
 import { google, type GoogleLanguageModelOptions } from "@ai-sdk/google";
 import type { ChatTurn, LocalizedString, PortfolioData } from "@/types";
 import { portfolioData } from "@/data/portfolioData";
-import { AI_FAILOVER_LOG, FALLBACK_MODEL_ID, PRIMARY_MODEL_ID, type AiModelId } from "@/lib/aiModels";
+import {
+  AI_FAILOVER_LOG,
+  FALLBACK_MODEL_ID,
+  PRIMARY_MODEL_ID,
+  TIER2_QUOTA_ALERT,
+  type AiModelId,
+} from "@/lib/aiModels";
+import { runAfterResponse } from "@/lib/background";
+import { reserveTier2Slot } from "@/lib/quotaTracker";
+import { insertChatLog, type ChatLogInsert } from "@/lib/supabase";
+import { loadGithubPromptContext } from "@/services/githubService";
+import { deliverTelegramAlert, formatChatAlert, sendTelegramAlert } from "@/services/telegramService";
 
 /** Both model attempts share this wall-clock budget, kept below the route's `maxDuration` of 30s. */
 export const CHAT_STREAM_BUDGET_MS = 26_000;
@@ -26,19 +37,38 @@ export interface ModelTimeout {
   firstChunkMs: number;
 }
 
+/** Visitor context recorded after the served stream finishes. Raw IP addresses are never included. */
+export interface ChatAuditContext {
+  sessionId: string;
+  userPrompt: string;
+  locale: string;
+  ipHash: string | null;
+}
+
+export interface ModelStreamRequest {
+  modelId: AiModelId;
+  messages: readonly ModelMessage[];
+  timeout: ModelTimeout;
+  system: string;
+  maxOutputTokens: number;
+  onFinish?: (text: string) => void;
+}
+
+export interface OpenedModelStream {
+  events: AsyncIterable<ModelStreamEvent>;
+  /** Called once the first visible token is committed to the visitor. */
+  markServed: () => void;
+}
+
 /** Opens a provider stream. Tests substitute this to simulate quota and transport failures. */
-export type ModelStreamOpener = (
-  modelId: AiModelId,
-  messages: readonly ModelMessage[],
-  timeout: ModelTimeout,
-) => Promise<AsyncIterable<ModelStreamEvent>>;
+export type ModelStreamOpener = (request: ModelStreamRequest) => Promise<OpenedModelStream>;
 
 export interface PortfolioChatStream {
   modelId: AiModelId;
   text: AsyncIterable<string>;
 }
 
-const SYSTEM_PROMPT = buildSystemPrompt(portfolioData);
+const CONSTRAINED_OUTPUT_TOKENS = 180;
 
 /**
  * Dual-model fallback. The primary stream is probed until the first text token or a terminal
@@ -46,23 +76,29 @@ const SYSTEM_PROMPT = buildSystemPrompt(portfolioData);
  * byte is written to the client, so the visitor only observes one continuous token stream.
  * The fallback only receives whatever remains of the shared budget, so a slow primary can
  * never push the request past the serverless execution limit.
+ * Tier 2 usage is counted before that second attempt. At 85% of its daily cap the prompt
+ * collapses to a short reply that points recruiters at email or Request Resume.
  */
 export async function streamPortfolioChat(
   turns: readonly ChatTurn[],
   openStream: ModelStreamOpener = openGoogleModelStream,
   now: () => number = Date.now,
+  audit?: ChatAuditContext,
 ): Promise<PortfolioChatStream> {
   const messages = toModelMessages(turns);
   const deadline = now() + CHAT_STREAM_BUDGET_MS;
+  const system = await composeSystemPrompt();
 
   try {
-    const stream = await openStream(PRIMARY_MODEL_ID, messages, budgetTimeout(deadline, now()));
-    return { modelId: PRIMARY_MODEL_ID, text: await commitTextStream(stream) };
+    return await serveModel(PRIMARY_MODEL_ID, messages, system, MAX_OUTPUT_TOKENS, deadline, now, openStream, audit);
   } catch (error) {
     if (!isFailoverError(error)) throw error;
     console.error(AI_FAILOVER_LOG);
-    const stream = await openStream(FALLBACK_MODEL_ID, messages, budgetTimeout(deadline, now()));
-    return { modelId: FALLBACK_MODEL_ID, text: await commitTextStream(stream) };
+    const quota = await reserveTier2Slot(new Date(now()));
+    if (quota.shouldAlert) sendTelegramAlert(TIER2_QUOTA_ALERT);
+    const constrained = quota.constrained ? `${system}\n\n${quotaGuardrail()}` : system;
+    const tokens = quota.constrained ? CONSTRAINED_OUTPUT_TOKENS : MAX_OUTPUT_TOKENS;
+    return serveModel(FALLBACK_MODEL_ID, messages, constrained, tokens, deadline, now, openStream, audit);
   }
 }
 
@@ -111,21 +147,92 @@ export function createTokenStream(tokens: AsyncIterable<string>): ReadableStream
   });
 }
 
-async function openGoogleModelStream(
+async function serveModel(
   modelId: AiModelId,
   messages: readonly ModelMessage[],
-  timeout: ModelTimeout,
-): Promise<AsyncIterable<ModelStreamEvent>> {
-  const result = streamText({
-    model: google(modelId),
-    system: SYSTEM_PROMPT,
-    messages: [...messages],
-    maxRetries: 0,
-    maxOutputTokens: MAX_OUTPUT_TOKENS,
-    timeout,
-    providerOptions: PROVIDER_OPTIONS,
+  system: string,
+  maxOutputTokens: number,
+  deadline: number,
+  now: () => number,
+  openStream: ModelStreamOpener,
+  audit: ChatAuditContext | undefined,
+): Promise<PortfolioChatStream> {
+  const opened = await openStream({
+    modelId,
+    messages,
+    system,
+    maxOutputTokens,
+    timeout: budgetTimeout(deadline, now()),
+    onFinish: (text) => {
+      if (!audit || !text.trim()) return;
+      runAfterResponse(recordCompletedChat({ ...audit, aiResponse: text, modelUsed: modelId }));
+    },
   });
-  return result.stream;
+  const text = await commitTextStream(opened.events);
+  opened.markServed();
+  return { modelId, text };
+}
+
+async function composeSystemPrompt(): Promise<string> {
+  try {
+    const repositoryContext = await loadGithubPromptContext();
+    return `${buildSystemPrompt(portfolioData)}\n\n${repositoryContext}`;
+  } catch (error) {
+    console.warn("[GitHub] Prompt enrichment skipped.", error);
+    return buildSystemPrompt(portfolioData);
+  }
+}
+
+function quotaGuardrail(): string {
+  const email = portfolioData.contact.email;
+  return [
+    "QUOTA GUARDRAIL (active)",
+    "Daily Tier-2 capacity is above 85%.",
+    "Answer in under 80 words.",
+    `Guide the recruiter to ${email} or the Request Resume button on this site.`,
+    "Do not elaborate beyond that.",
+  ].join("\n");
+}
+
+async function recordCompletedChat(entry: ChatLogInsert): Promise<void> {
+  await insertChatLog(entry);
+  await deliverTelegramAlert(
+    formatChatAlert({ prompt: entry.userPrompt, model: entry.modelUsed, locale: entry.locale }),
+  );
+}
+
+async function openGoogleModelStream(request: ModelStreamRequest): Promise<OpenedModelStream> {
+  let served = false;
+  let finished: string | null = null;
+
+  const flush = () => {
+    if (!served || finished === null) return;
+    const text = finished;
+    finished = null;
+    request.onFinish?.(text);
+  };
+
+  const result = streamText({
+    model: google(request.modelId),
+    system: request.system,
+    messages: [...request.messages],
+    maxRetries: 0,
+    maxOutputTokens: request.maxOutputTokens,
+    timeout: request.timeout,
+    providerOptions: PROVIDER_OPTIONS,
+    onFinish: (event) => {
+      finished = event.text ?? "";
+      flush();
+    },
+  });
+
+  return {
+    events: result.stream,
+    markServed: () => {
+      served = true;
+      flush();
+    },
+  };
 }
 
 /**

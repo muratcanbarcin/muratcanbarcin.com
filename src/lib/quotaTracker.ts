@@ -1,0 +1,54 @@
+import { TIER2_GUARD_AT } from "@/lib/aiModels";
+import { readTier2Usage, writeTier2Usage } from "@/lib/supabase";
+
+export interface Tier2Reservation {
+  count: number;
+  /** True once today's Tier-2 usage has reached 85% of the 500 RPD cap. */
+  constrained: boolean;
+  /** True only on the request that crosses the threshold. */
+  shouldAlert: boolean;
+}
+
+interface MemoryBucket {
+  count: number;
+  alerted: boolean;
+}
+
+const memory = new Map<string, MemoryBucket>();
+
+export async function reserveTier2Slot(now: Date = new Date()): Promise<Tier2Reservation> {
+  const day = now.toISOString().slice(0, 10);
+  const persisted = await reservePersisted(day);
+  if (persisted) {
+    memory.set(day, { count: persisted.count, alerted: persisted.alerted });
+    return persisted.reservation;
+  }
+  return reserveMemory(day);
+}
+
+async function reservePersisted(
+  day: string,
+): Promise<{ reservation: Tier2Reservation; count: number; alerted: boolean } | null> {
+  const current = await readTier2Usage(day);
+  if (!current) return null;
+
+  const count = current.request_count + 1;
+  const reservation = describe(count, current.alert_sent);
+  const alerted = current.alert_sent || reservation.shouldAlert;
+  const saved = await writeTier2Usage(day, count, alerted);
+  if (!saved) return null;
+  return { reservation, count, alerted };
+}
+
+function reserveMemory(day: string): Tier2Reservation {
+  const bucket = memory.get(day) ?? { count: 0, alerted: false };
+  const count = bucket.count + 1;
+  const reservation = describe(count, bucket.alerted);
+  memory.set(day, { count, alerted: bucket.alerted || reservation.shouldAlert });
+  return reservation;
+}
+
+function describe(count: number, alerted: boolean): Tier2Reservation {
+  const constrained = count >= TIER2_GUARD_AT;
+  return { count, constrained, shouldAlert: constrained && !alerted };
+}
