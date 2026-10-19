@@ -60,13 +60,6 @@ export const en: Dictionary = {
   filters: {
     label: "Filter",
     all: "All",
-    categories: {
-      "defense-edge": "Defense & Edge",
-      "enterprise-saas": "Enterprise SaaS",
-      "applied-ai": "Applied AI",
-      "iot-fullstack": "IoT & Full-Stack",
-      "academic-research": "Academic Research",
-    },
     statuses: {
       production: "Production",
       completed: "Completed",
@@ -196,6 +189,15 @@ export const en: Dictionary = {
     placeholderCaption:
       "System topology schematics and high-fidelity video walkthroughs are actively being curated. Conceptual execution pipeline outlined below.",
     showMedia: "Show media {index} of {total}",
+    systemDocs: "System Docs / README",
+    viewOnGitHub: "View on GitHub",
+    github: "GitHub",
+    closeDocs: "Close documentation",
+    docsLoading: "Loading documentation",
+    docsError: "Documentation could not be loaded.",
+    docsDiscuss: "Want to discuss this architecture?",
+    openMcb: "Open MCB.ai",
+    contactMurat: "Contact Murat Can",
     linkTypes: {
       github: "Source code",
       "live-demo": "Live demo",

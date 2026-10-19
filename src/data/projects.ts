@@ -13,7 +13,11 @@ export const projects: readonly Project[] = [
       en: "TEKNOFEST Finalist · Senior Capstone Project",
       tr: "TEKNOFEST Finalisti · Bitirme Projesi",
     },
-    category: "defense-edge",
+    topics: [
+      { en: "C4ISR", tr: "C4ISR" },
+      { en: "Edge AI", tr: "Uçta Yapay Zeka" },
+      { en: "Data Fusion", tr: "Veri Füzyonu" },
+    ],
     summary: {
       en: "A polyglot microservices C4ISR prototype that fuses multi-source sensor data at the edge for real-time situational awareness and threat detection.",
       tr: "Gerçek zamanlı durumsal farkındalık ve tehdit algılama için çok kaynaklı sensör verilerini uçta birleştiren polyglot mikroservis tabanlı bir C4ISR prototipi.",
@@ -38,41 +42,42 @@ export const projects: readonly Project[] = [
     architectureFlow: [
       {
         step: 1,
-        title: "Edge Sensing",
+        title: "Edge Camera & Sensors",
         description: {
-          en: "Pi 5 nodes with AI cameras",
-          tr: "Yapay zeka kameralı Pi 5 düğümleri",
+          en: "Field cameras and sensors on the edge node",
+          tr: "Uç düğümdeki saha kameraları ve sensörler",
         },
         technology: "Raspberry Pi 5 · AI Camera",
-        inputOutput: "Camera stream → detections",
+        inputOutput: "Scene → sensor frames",
       },
       {
         step: 2,
-        title: "Data Fusion",
+        title: "OpenCV Feature Extraction",
         description: {
-          en: "Multi-source detections → one tactical picture",
-          tr: "Çok kaynaklı tespitler → tek taktik tablo",
+          en: "Visual features extracted on the edge",
+          tr: "Görsel öznitelikler uçta çıkarılır",
         },
-        technology: "Python · Computer Vision",
-        inputOutput: "Detections → fused tracks",
+        technology: "OpenCV · Python",
+        inputOutput: "Frames → features",
       },
       {
         step: 3,
-        title: "Polyglot Service Layer",
+        title: "Sensor Fusion Engine",
         description: {
-          en: "Independent Java & Python microservices",
-          tr: "Bağımsız Java & Python mikroservisleri",
+          en: "Multi-source features fused into one tactical picture",
+          tr: "Çok kaynaklı öznitelikler tek taktik tabloya birleşir",
         },
-        technology: "Java · Python · Microservices",
+        technology: "Python · Data Fusion",
+        inputOutput: "Features → fused tracks",
       },
       {
         step: 4,
-        title: "Decision Support",
+        title: "Tactical Station",
         description: {
-          en: "Fused tracks on tactical maps",
-          tr: "Taktik haritada füzyonlanmış izler",
+          en: "Fused tracks delivered to the operator station",
+          tr: "Füzyonlanmış izler operatör istasyonuna iletilir",
         },
-        technology: "Tactical Map UI",
+        technology: "FastAPI · ZeroMQ",
         inputOutput: "Fused tracks → operator view",
       },
     ],
@@ -81,6 +86,7 @@ export const projects: readonly Project[] = [
     status: "completed",
     featured: true,
     award: { en: "TEKNOFEST Finalist", tr: "TEKNOFEST Finalisti" },
+    githubUrl: "https://github.com/muratcanbarcin/AI-Supported-Lightweight-C4ISR-Prototype-SINAPS",
     githubSync: {
       enabled: true,
       repo: "muratcanbarcin/AI-Supported-Lightweight-C4ISR-Prototype-SINAPS",
@@ -90,7 +96,6 @@ export const projects: readonly Project[] = [
     },
   },
   {
-    // Proprietary Sun Group source. githubSync stays unset so GitHub is never called.
     id: "sun-group-expense",
     slug: "expense-saas",
     title: "Expense — AI-Powered B2B Expense SaaS",
@@ -98,7 +103,11 @@ export const projects: readonly Project[] = [
       en: "Sun Group · AI & Backend Engineering",
       tr: "Sun Şirketler Grubu · AI & Backend Mühendisliği",
     },
-    category: "enterprise-saas",
+    topics: [
+      { en: "Document Extraction", tr: "Belge Çıkarımı" },
+      { en: "Approval Workflow", tr: "Onay Akışı" },
+      { en: "SAP Integration", tr: "SAP Entegrasyonu" },
+    ],
     summary: {
       en: "An AI document-extraction microservice and Spring Boot approval backend for a B2B expense platform integrated with SAP.",
       tr: "SAP ile entegre bir B2B masraf platformu için yapay zeka tabanlı belge işleme mikroservisi ve Spring Boot onay altyapısı.",
@@ -149,6 +158,11 @@ export const projects: readonly Project[] = [
     links: [],
     status: "completed",
     featured: true,
+    statusBadge: {
+      en: "Enterprise B2B SaaS (Sun Group · Proprietary)",
+      tr: "Kurumsal B2B SaaS (Sun Şirketler Grubu · Tescilli)",
+    },
+    githubSync: { enabled: false },
   },
   {
     id: "enterprise-agent-sso",
@@ -158,7 +172,11 @@ export const projects: readonly Project[] = [
       en: "AI-Powered Security System",
       tr: "Yapay Zeka Destekli Güvenlik Sistemi",
     },
-    category: "applied-ai",
+    topics: [
+      { en: "Risk-Based SSO", tr: "Risk Tabanlı SSO" },
+      { en: "Anomaly Detection", tr: "Anomali Tespiti" },
+      { en: "Access Control", tr: "Erişim Kontrolü" },
+    ],
     summary: {
       en: "Risk-based access control that scores SSO requests with anomaly detection and escalates high-risk access automatically.",
       tr: "SSO isteklerini anomali tespitiyle puanlayan ve yüksek riskli erişimleri otomatik olarak eskale eden risk tabanlı erişim kontrolü.",
@@ -176,39 +194,50 @@ export const projects: readonly Project[] = [
     architectureFlow: [
       {
         step: 1,
-        title: "Access Gateway",
+        title: "Client Request",
         description: {
-          en: "SSO requests routed to risk evaluation",
-          tr: "SSO istekleri risk değerlendirmesine yönlenir",
+          en: "Access request enters the enterprise agent",
+          tr: "Erişim isteği kurumsal ajana girer",
         },
-        technology: "Spring Boot · React",
-        inputOutput: "SSO request → risk evaluation",
+        technology: "React",
+        inputOutput: "User → access request",
       },
       {
         step: 2,
-        title: "Risk Engine",
+        title: "Enterprise Identity Provider",
         description: {
-          en: "Isolation Forest anomaly scoring",
-          tr: "Isolation Forest ile anomali skorlama",
+          en: "Identity asserted before risk evaluation",
+          tr: "Risk değerlendirmesinden önce kimlik doğrulanır",
         },
-        technology: "Python · FastAPI · Isolation Forest",
-        inputOutput: "Access features → risk score",
+        technology: "SSO · Spring Boot",
+        inputOutput: "Request → authenticated principal",
       },
       {
         step: 3,
-        title: "Escalation Orchestration",
+        title: "RBAC Risk Engine",
         description: {
-          en: "High-risk requests auto-escalated",
-          tr: "Yüksek riskli istekler otomatik eskale edilir",
+          en: "Isolation Forest scores the access anomaly",
+          tr: "Isolation Forest erişim anomalisini puanlar",
         },
-        technology: "n8n",
-        inputOutput: "High-risk score → escalation",
+        technology: "Python · FastAPI · Isolation Forest",
+        inputOutput: "Principal → risk score",
+      },
+      {
+        step: 4,
+        title: "Automated SSO Session Escalation",
+        description: {
+          en: "High-risk sessions escalate without a manual queue",
+          tr: "Yüksek riskli oturumlar manuel kuyruk olmadan eskale edilir",
+        },
+        technology: "n8n · Docker",
+        inputOutput: "High-risk score → escalated session",
       },
     ],
     media: [],
     links: [],
     status: "completed",
     featured: false,
+    githubUrl: "https://github.com/muratcanbarcin/EnterpriseAgentForSSO",
     githubSync: {
       enabled: true,
       repo: "muratcanbarcin/EnterpriseAgentForSSO",
@@ -218,7 +247,6 @@ export const projects: readonly Project[] = [
     },
   },
   {
-    // No public repository is published. githubSync stays unset so GitHub is never called.
     id: "sleepflow-ai",
     slug: "sleepflow-ai",
     title: "SleepFlow.AI",
@@ -226,7 +254,11 @@ export const projects: readonly Project[] = [
       en: "IoT & AI Integrated Sleep Analysis System",
       tr: "IoT & Yapay Zeka Entegreli Uyku Analiz Sistemi",
     },
-    category: "iot-fullstack",
+    topics: [
+      { en: "Sleep Analysis", tr: "Uyku Analizi" },
+      { en: "Biometric Fusion", tr: "Biyometrik Füzyon" },
+      { en: "Edge Vision", tr: "Uçta Görüntü" },
+    ],
     summary: {
       en: "Fuses smartwatch biometrics with Raspberry Pi vision data to generate personalized sleep insights with Google Gemini.",
       tr: "Akıllı saat biyometrik verilerini Raspberry Pi görüntü verileriyle birleştirerek Google Gemini ile kişiselleştirilmiş uyku analizleri üretir.",
@@ -285,8 +317,13 @@ export const projects: readonly Project[] = [
     ],
     media: [],
     links: [],
-    status: "completed",
+    status: "in-progress",
     featured: true,
+    statusBadge: {
+      en: "Active Research Asset (Public release upon study completion)",
+      tr: "Aktif araştırma varlığı (Çalışma tamamlanınca kamuya açılacak)",
+    },
+    githubSync: { enabled: false },
   },
   {
     id: "karma",
@@ -296,7 +333,11 @@ export const projects: readonly Project[] = [
       en: "Sustainable Accommodation Platform · Incubated at T3 Startup Center",
       tr: "Sürdürülebilir Konaklama Platformu · T3 Girişim Merkezi Destekli",
     },
-    category: "iot-fullstack",
+    topics: [
+      { en: "Accommodation Sharing", tr: "Konaklama Paylaşımı" },
+      { en: "Karma Points", tr: "Karma Puanı" },
+      { en: "Booking", tr: "Rezervasyon" },
+    ],
     summary: {
       en: "A scalable accommodation platform with booking, secure messaging, and a token-based reward system.",
       tr: "Rezervasyon, güvenli mesajlaşma ve token tabanlı ödül sistemine sahip ölçeklenebilir bir konaklama platformu.",
@@ -341,6 +382,7 @@ export const projects: readonly Project[] = [
     links: [],
     status: "completed",
     featured: false,
+    githubUrl: "https://github.com/muratcanbarcin/Karma-Web-App",
     githubSync: {
       enabled: true,
       repo: "muratcanbarcin/Karma-Web-App",

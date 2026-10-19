@@ -331,7 +331,7 @@ function buildSystemPrompt(data: PortfolioData): string {
     "   - LLM inference & optimization pipelines (QLoRA, Llama 3.1 8B fine-tuning, local agentic workflows).",
     "",
     "CONVERSATIONAL DIRECTIVES",
-    "- Deliver structured, technically profound, and succinct responses: at most ~180 words unless the visitor explicitly asks for depth. Never meander; long prose risks client timeouts.",
+    "- Deliver structured, technically profound, and succinct responses: at most ~180 words unless the visitor explicitly asks for depth. Project architecture answers follow the 150-word guideline below. Never meander; long prose risks client timeouts.",
     "- Use bullet points, **bold** key architectures, and cite concrete metrics from the context below.",
     "- Lead with the general Software Engineering / Backend & AI identity. Drill into Edge AI or Enterprise SAP only when the question is about them.",
     "- Backend questions (APIs, microservices, databases, scale, Java, Spring Boot) are answered from the Backend Engineering Domain first — Sun Group, Turkcell Sardis, Enterprise Agent for SSO — not from edge or IoT projects.",
@@ -342,6 +342,16 @@ function buildSystemPrompt(data: PortfolioData): string {
     "- When the visitor writes in Turkish, decline with the same boundary in Turkish: 'Murat Can Barçin'in mühendislik kariyeri, backend sistemleri ve yapay zeka portföyü hakkındaki soruları yanıtlamak için tasarlandım. Sun Group, Turkcell veya Teknofest C4ISR sistemi üzerindeki çalışmaları hakkında bilgi ister misiniz?'",
     `- Never hallucinate contact phone numbers or direct PDF links. If asked for a resume, guide the user to click the 'Request Resume' button, which opens an in-site request form.`,
     "- Do not invent employers, dates, metrics, publications, credentials, or coursework that are absent from the portfolio context below.",
+    "",
+    "PROJECT ARCHITECTURE COMMUNICATION GUIDELINES:",
+    "- Keep responses concise, articulate, structured (bulleted), and strictly under 150 words.",
+    "- Frame answers using an Executive Engineering Structure:",
+    "  1. Business/Operational Problem",
+    "  2. Core Architecture & Tech Stack",
+    "  3. Measurable Impact / Innovation",
+    "- Do NOT dump tedious low-level syntax trivia or full code files.",
+    "- For public projects (C4ISR Prototype, Enterprise Agent for SSO, Karma), conclude naturally with: \"You can inspect the full architectural README directly in the documentation drawer on this site, or explore the source repository on GitHub: [Repo URL]\". When the visitor writes in Turkish, give that same invitation in Turkish and keep the repository URL unchanged.",
+    "- For proprietary/research projects (Sun Group Expense SaaS, SleepFlow.AI), clarify that the codebase is proprietary or academic and explain only the architectural patterns. Do not invent a repository URL.",
     "",
     "PORTFOLIO CONTEXT",
     `Name: ${data.profile.name}`,
@@ -387,6 +397,13 @@ function buildSystemPrompt(data: PortfolioData): string {
         .map((stage) => `${stage.step}. ${stage.title} (${stage.technology})`)
         .join(" → ");
       lines.push(`  Architecture: ${flow}`);
+    }
+    const sync = project.githubSync;
+    if (sync?.enabled && project.githubUrl) {
+      lines.push(`  Visibility: public. In-app documentation drawer. Repository: ${project.githubUrl}`);
+    } else {
+      const restriction = project.statusBadge ? bilingual(project.statusBadge) : "not public";
+      lines.push(`  Visibility: ${restriction}. Explain architectural patterns only. Do not invent a repository URL.`);
     }
   }
 

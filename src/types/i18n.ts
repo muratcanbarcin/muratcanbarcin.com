@@ -1,7 +1,7 @@
 import type { CertificationCategory } from "./certification";
 import type { ChatErrorKind } from "./console";
 import type { EmploymentType } from "./experience";
-import type { ProjectCategory, ProjectStatus } from "./project";
+import type { ProjectStatus } from "./project";
 import type { ProjectLinkType } from "./media";
 import type { TerminalCommandName } from "./terminal";
 
@@ -58,7 +58,6 @@ export interface Dictionary {
   filters: {
     label: string;
     all: string;
-    categories: Record<ProjectCategory, string>;
     statuses: Record<ProjectStatus, string>;
     certifications: Record<CertificationCategory, string>;
     employment: Record<EmploymentType, string>;
@@ -173,6 +172,15 @@ export interface Dictionary {
     placeholderCaption: string;
     /** Supports `{index}` and `{total}` placeholders. */
     showMedia: string;
+    systemDocs: string;
+    viewOnGitHub: string;
+    github: string;
+    closeDocs: string;
+    docsLoading: string;
+    docsError: string;
+    docsDiscuss: string;
+    openMcb: string;
+    contactMurat: string;
     linkTypes: Record<ProjectLinkType, string>;
   };
   experience: {

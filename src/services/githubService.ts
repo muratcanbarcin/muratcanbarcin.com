@@ -22,9 +22,21 @@ export interface SyncedRepository {
   source: "github" | "fallback";
 }
 
+export interface ProjectReadmeDocument {
+  title: string;
+  githubUrl: string;
+  branch: string;
+  /** Clean markdown with absolute diagram URLs, safe to render in the documentation modal. */
+  markdown: string;
+  diagrams: readonly ReadmeDiagram[];
+}
+
 /** Projects whose config explicitly turns GitHub sync on. Everything else is ignored. */
 export function selectWhitelistedProjects(projects: readonly Project[]): Project[] {
-  return projects.filter((project) => project.githubSync?.enabled === true);
+  return projects.filter((project) => {
+    const sync = project.githubSync;
+    return Boolean(sync && sync.enabled && sync.repo.length > 0);
+  });
 }
 
 /**
@@ -59,11 +71,46 @@ export async function loadGithubPromptContext(
     const config = project.githubSync;
     if (!config?.enabled || config.injectToAI === false) continue;
     const row = synced.get(project.id);
+    const repositoryUrl = project.githubUrl ?? `https://github.com/${config.repo}`;
     blocks.push(`[SYNCHRONIZED REPOSITORY CONTEXT: ${project.title}]`);
+    blocks.push(`Repository: ${repositoryUrl}`);
+    blocks.push("Architectural summary only. Do not recite file trees, commands, or low-level syntax.");
     blocks.push(row?.summary || localSummary(project));
   }
 
   return blocks.join("\n\n");
+}
+
+/**
+ * README for one whitelisted project. Disabled, proprietary, and unknown ids return null
+ * before any network call.
+ */
+export async function loadProjectDocumentation(projectId: string): Promise<ProjectReadmeDocument | null> {
+  const project = portfolioData.projects.find((item) => item.id === projectId);
+  const sync = project?.githubSync;
+  if (!project || !sync?.enabled || sync.repo.length === 0) return null;
+
+  const branch = sync.branch?.trim() || DEFAULT_BRANCH;
+  const githubUrl = project.githubUrl ?? `https://github.com/${sync.repo}`;
+  const fallback = localDocumentation(project);
+  const coordinates = parseRepo(sync.repo);
+  if (!coordinates) return { title: project.title, githubUrl, branch, markdown: fallback, diagrams: [] };
+
+  try {
+    const raw = await fetchReadmeMarkdown(coordinates.owner, coordinates.name, branch);
+    if (!raw) return { title: project.title, githubUrl, branch, markdown: fallback, diagrams: [] };
+    const prepared = prepareReadme(raw, sync.repo, branch);
+    return {
+      title: project.title,
+      githubUrl,
+      branch,
+      markdown: prepared.markdown || fallback,
+      diagrams: prepared.diagrams,
+    };
+  } catch (error) {
+    console.warn(`[GitHub] README unavailable for ${project.id}. Using the local architecture summary.`, error);
+    return { title: project.title, githubUrl, branch, markdown: fallback, diagrams: [] };
+  }
 }
 
 /** Appends remote architecture diagrams onto local media. Failed syncs keep the static media array. */
@@ -165,6 +212,22 @@ function fallbackSync(project: Project, repo: string, branch: string): SyncedRep
 
 function localSummary(project: Project): string {
   return project.description.en.replace(/\s+/g, " ").trim().slice(0, 400);
+}
+
+function localDocumentation(project: Project): string {
+  const steps = project.architectureFlow
+    .map((step) => `${step.step}. **${step.title}** — ${step.description.en} (${step.technology})`)
+    .join("\n");
+  return [`# ${project.title}`, "", project.summary.en, "", "## Architecture", "", steps].join("\n");
+}
+
+function prepareReadme(raw: string, repo: string, branch: string): { markdown: string; diagrams: ReadmeDiagram[] } {
+  const stripped = raw.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/javascript:/gi, "");
+  const markdown = stripped.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_match, alt: string, target: string) => {
+    const url = absoluteDiagramUrl(repo, branch, target);
+    return url ? `![${alt}](${url})` : "";
+  });
+  return { markdown: markdown.trim(), diagrams: parseReadme(markdown, repo, branch).diagrams };
 }
 
 function sanitizeReadme(markdown: string): string {

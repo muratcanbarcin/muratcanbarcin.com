@@ -1,13 +1,6 @@
 import type { LocalizedString } from "./locale";
 import type { MediaAsset, ProjectLink } from "./media";
 
-export type ProjectCategory =
-  | "defense-edge"
-  | "enterprise-saas"
-  | "applied-ai"
-  | "iot-fullstack"
-  | "academic-research";
-
 export type ProjectStatus = "production" | "completed" | "under-review" | "in-progress";
 
 export interface ArchitectureStep {
@@ -18,11 +11,7 @@ export interface ArchitectureStep {
   inputOutput?: string;
 }
 
-/** Opt-in GitHub binding. Absent or `enabled: false` means the API is never called. */
-export interface GitHubSyncConfig {
-  enabled: boolean;
-  /** Exact repository, `owner/name`. */
-  repo: string;
+interface GitHubSyncFields {
   /** Defaults to `main` when omitted. */
   branch?: string;
   /** Feed the parsed README into MCB.ai. Defaults to true. */
@@ -31,12 +20,24 @@ export interface GitHubSyncConfig {
   syncArchitectureMedia?: boolean;
 }
 
+/** Opt-in GitHub binding. `enabled: false` means the API is never called. */
+export type GitHubSyncConfig =
+  | (GitHubSyncFields & {
+      enabled: true;
+      /** Exact repository, `owner/name`. */
+      repo: string;
+    })
+  | (GitHubSyncFields & {
+      enabled: false;
+    });
+
 export interface Project {
   id: string;
   slug: string;
   title: string;
   subtitle: LocalizedString;
-  category: ProjectCategory;
+  /** Subject headings drawn from the project README or, when unpublished, the portfolio description. */
+  topics: readonly LocalizedString[];
   summary: LocalizedString;
   description: LocalizedString;
   keyMetrics: LocalizedString[];
@@ -48,5 +49,9 @@ export interface Project {
   featured: boolean;
   /** Competition or distinction rendered as a prominent mark, separate from metrics. */
   award?: LocalizedString;
+  /** Canonical repository page. Present only for whitelisted public projects. */
+  githubUrl?: string;
+  /** Shown instead of documentation actions when the repository is not public. */
+  statusBadge?: LocalizedString;
   githubSync?: GitHubSyncConfig;
 }

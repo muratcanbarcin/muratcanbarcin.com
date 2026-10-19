@@ -60,13 +60,6 @@ export const tr: Dictionary = {
   filters: {
     label: "Filtrele",
     all: "Tümü",
-    categories: {
-      "defense-edge": "Savunma & Edge",
-      "enterprise-saas": "Kurumsal SaaS",
-      "applied-ai": "Uygulamalı Yapay Zeka",
-      "iot-fullstack": "IoT & Full-Stack",
-      "academic-research": "Akademik Araştırma",
-    },
     statuses: {
       production: "Canlıda",
       completed: "Tamamlandı",
@@ -196,6 +189,15 @@ export const tr: Dictionary = {
     placeholderCaption:
       "Sistem topolojisi şemaları ve yüksek çözünürlüklü demo kayıtları hazırlanmaktadır. Temel veri akış hattı aşağıda özetlenmiştir.",
     showMedia: "Medya {index} / {total} göster",
+    systemDocs: "Sistem Dokümantasyonu / README",
+    viewOnGitHub: "GitHub'da görüntüle",
+    github: "GitHub",
+    closeDocs: "Dokümantasyonu kapat",
+    docsLoading: "Dokümantasyon yükleniyor",
+    docsError: "Dokümantasyon yüklenemedi.",
+    docsDiscuss: "Bu mimariyi konuşmak ister misiniz?",
+    openMcb: "MCB.ai'yi aç",
+    contactMurat: "Murat Can ile iletişim",
     linkTypes: {
       github: "Kaynak kod",
       "live-demo": "Canlı demo",
