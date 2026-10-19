@@ -7,7 +7,8 @@ import { useLocale } from "@/hooks/useLocale";
 import { useMobileMenu } from "@/hooks/useMobileMenu";
 import { useConsoleShortcut } from "@/hooks/useConsoleShortcut";
 import { actionVariants } from "@/components/ui/action";
-import { LanguageToggle } from "./LanguageToggle";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ThemeToggle } from "./ThemeToggle";
 import { MobileMenu } from "./MobileMenu";
 import { Monogram } from "./Monogram";
 import { RequestResumeButton } from "./RequestResumeButton";
@@ -59,7 +60,8 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <LanguageToggle />
+          <LanguageSwitcher />
+          <ThemeToggle />
           <ConsoleTrigger shortcutLabel={shortcutLabel} className="hidden sm:inline-flex" />
           <RequestResumeButton intent="primary" className="hidden md:inline-flex" />
           <button

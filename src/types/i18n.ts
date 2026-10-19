@@ -9,6 +9,7 @@ export interface Dictionary {
   meta: {
     languageName: string;
     switchLanguage: string;
+    toggleTheme: string;
   };
   nav: {
     home: string;

@@ -4,6 +4,7 @@ export const en: Dictionary = {
   meta: {
     languageName: "English",
     switchLanguage: "Switch language",
+    toggleTheme: "Toggle color theme",
   },
   nav: {
     home: "Home",

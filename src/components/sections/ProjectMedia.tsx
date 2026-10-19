@@ -120,7 +120,7 @@ function BlueprintPlaceholder({ project }: { project: Project }) {
         <ol className="flex flex-wrap items-center justify-center gap-y-3">
           {steps.map((step, index) => (
             <li key={step.step} className="flex items-center">
-              <span className="rounded border border-dashed border-zinc-700 bg-zinc-900/90 px-2.5 py-1.5 font-mono text-[10px] text-zinc-400 shadow-[0_0_0_3px_rgb(9_9_11)]">
+              <span className="rounded border border-dashed border-zinc-700 bg-zinc-900/90 px-2.5 py-1.5 font-mono text-[10px] text-zinc-400 shadow-[0_0_0_3px_var(--background)]">
                 {step.title}
               </span>
               {index < steps.length - 1 && (

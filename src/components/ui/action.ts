@@ -6,7 +6,7 @@ export const actionVariants = cva(
   {
     variants: {
       intent: {
-        primary: "bg-zinc-100 text-zinc-950 hover:bg-white",
+        primary: "bg-zinc-100 text-zinc-950 hover:bg-zinc-200",
         secondary:
           "border border-zinc-800 bg-zinc-900/60 text-zinc-200 hover:border-zinc-700 hover:bg-zinc-800/70",
         ghost: "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100",

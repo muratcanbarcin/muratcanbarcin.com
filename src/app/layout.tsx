@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import { JsonLd } from "@/components/common/JsonLd";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { LocaleProvider } from "@/contexts/LocaleContext";
 import { siteConfig } from "@/data/site";
 import { cn } from "@/lib/utils";
@@ -49,24 +50,35 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#09090b",
-  colorScheme: "dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fcfcfd" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       data-scroll-behavior="smooth"
       className={cn(
-        "dark scroll-smooth motion-reduce:scroll-auto",
+        "scroll-smooth motion-reduce:scroll-auto",
         geistSans.variable,
         jetbrainsMono.variable,
       )}
     >
       <body className="min-h-dvh overflow-x-clip">
-        <JsonLd />
-        <LocaleProvider>{children}</LocaleProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.classList.toggle("dark",d);r.style.colorScheme=d?"dark":"light";}catch(e){}})();`,
+          }}
+        />
+        <ThemeProvider>
+          <JsonLd />
+          <LocaleProvider>{children}</LocaleProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

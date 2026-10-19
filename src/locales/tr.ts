@@ -4,6 +4,7 @@ export const tr: Dictionary = {
   meta: {
     languageName: "Türkçe",
     switchLanguage: "Dili değiştir",
+    toggleTheme: "Renk temasını değiştir",
   },
   nav: {
     home: "Ana Sayfa",

@@ -80,7 +80,7 @@ export function ConsolePanel({
     <section
       aria-labelledby={titleId}
       className={cn(
-        "flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/80 shadow-2xl shadow-black/40 backdrop-blur-md",
+        "flex min-h-0 flex-col overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950/80 shadow-2xl shadow-black/10 backdrop-blur-md dark:shadow-black/40",
         className,
       )}
     >
@@ -178,7 +178,7 @@ export function ConsolePanel({
             type="submit"
             aria-label={t("console.send")}
             disabled={!canSubmit}
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-950 outline-none transition-shadow hover:bg-white hover:shadow-[0_0_18px_rgb(16_185_129/0.45)] focus-visible:ring-2 focus-visible:ring-emerald-400/60 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-950 outline-none transition-shadow hover:bg-zinc-200 hover:shadow-[0_0_18px_rgb(16_185_129/0.45)] focus-visible:ring-2 focus-visible:ring-emerald-400/60 disabled:cursor-not-allowed disabled:bg-zinc-800 disabled:text-zinc-500 disabled:shadow-none"
           >
             <ArrowUp aria-hidden="true" className="size-4" />
           </button>

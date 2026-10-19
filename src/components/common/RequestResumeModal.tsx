@@ -64,8 +64,8 @@ export function RequestResumeModal() {
       onClose={close}
       onClick={onBackdropClick}
       className={cn(
-        "m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-lg overflow-y-auto overscroll-contain rounded-xl border border-zinc-800 bg-zinc-950/95 p-0 text-zinc-300 shadow-2xl shadow-black/60 backdrop-blur-xl",
-        "backdrop:bg-zinc-950/70 backdrop:backdrop-blur-sm",
+        "m-auto max-h-[calc(100dvh-1.5rem)] w-[calc(100%-1.5rem)] max-w-lg overflow-y-auto overscroll-contain rounded-xl border border-zinc-800 bg-zinc-950/95 p-0 text-zinc-300 shadow-2xl shadow-black/10 backdrop-blur-xl dark:shadow-black/60",
+        "backdrop:bg-black/40 backdrop:backdrop-blur-sm dark:backdrop:bg-zinc-950/70",
         "scale-[0.98] opacity-0 transition-[opacity,scale,display,overlay] transition-discrete duration-200 open:scale-100 open:opacity-100 starting:open:scale-[0.98] starting:open:opacity-0 motion-reduce:transition-none",
       )}
     >
