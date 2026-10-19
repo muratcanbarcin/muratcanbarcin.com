@@ -20,6 +20,16 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  *   request_count INTEGER NOT NULL DEFAULT 0,
  *   alert_sent BOOLEAN NOT NULL DEFAULT FALSE
  * );
+ *
+ * CREATE TABLE IF NOT EXISTS system_logs (
+ *   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+ *   created_at TIMESTAMPTZ DEFAULT NOW(),
+ *   level TEXT NOT NULL CHECK (level IN ('error', 'warn', 'info')),
+ *   message TEXT NOT NULL,
+ *   route TEXT,
+ *   error_stack TEXT,
+ *   metadata JSONB
+ * );
  * ```
  */
 

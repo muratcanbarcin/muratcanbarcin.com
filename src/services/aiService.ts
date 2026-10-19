@@ -66,6 +66,9 @@ export type ModelStreamOpener = (request: ModelStreamRequest) => Promise<OpenedM
 export interface PortfolioChatStream {
   modelId: AiModelId;
   text: AsyncIterable<string>;
+  failedOver: boolean;
+  /** Present when the primary model failed and the lite model is serving the reply. */
+  failover?: { status?: number; name?: string };
 }
 
 const CONSTRAINED_OUTPUT_TOKENS = 180;
@@ -90,7 +93,8 @@ export async function streamPortfolioChat(
   const system = await composeSystemPrompt();
 
   try {
-    return await serveModel(PRIMARY_MODEL_ID, messages, system, MAX_OUTPUT_TOKENS, deadline, now, openStream, audit);
+    const served = await serveModel(PRIMARY_MODEL_ID, messages, system, MAX_OUTPUT_TOKENS, deadline, now, openStream, audit);
+    return { ...served, failedOver: false };
   } catch (error) {
     if (!isFailoverError(error)) throw error;
     console.error(AI_FAILOVER_LOG);
@@ -98,7 +102,8 @@ export async function streamPortfolioChat(
     if (quota.shouldAlert) sendTelegramAlert(TIER2_QUOTA_ALERT);
     const constrained = quota.constrained ? `${system}\n\n${quotaGuardrail()}` : system;
     const tokens = quota.constrained ? CONSTRAINED_OUTPUT_TOKENS : MAX_OUTPUT_TOKENS;
-    return serveModel(FALLBACK_MODEL_ID, messages, constrained, tokens, deadline, now, openStream, audit);
+    const served = await serveModel(FALLBACK_MODEL_ID, messages, constrained, tokens, deadline, now, openStream, audit);
+    return { ...served, failedOver: true, failover: summarizeFailover(error) };
   }
 }
 
@@ -156,7 +161,7 @@ async function serveModel(
   now: () => number,
   openStream: ModelStreamOpener,
   audit: ChatAuditContext | undefined,
-): Promise<PortfolioChatStream> {
+): Promise<Omit<PortfolioChatStream, "failedOver" | "failover">> {
   const opened = await openStream({
     modelId,
     messages,
@@ -277,6 +282,12 @@ function replay(
       }
     },
   };
+}
+
+function summarizeFailover(error: unknown): { status?: number; name?: string } {
+  const status = readStatusCode(error);
+  const name = error instanceof Error ? error.name : undefined;
+  return { status, name };
 }
 
 function readStatusCode(error: unknown): number | undefined {
