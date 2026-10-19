@@ -181,7 +181,8 @@ async function serveModel(
 async function composeSystemPrompt(): Promise<string> {
   try {
     const repositoryContext = await loadGithubPromptContext();
-    return `${buildSystemPrompt(portfolioData)}\n\n${repositoryContext}`;
+    const base = buildSystemPrompt(portfolioData);
+    return repositoryContext ? `${base}\n\n${repositoryContext}` : base;
   } catch (error) {
     console.warn("[GitHub] Prompt enrichment skipped.", error);
     return buildSystemPrompt(portfolioData);

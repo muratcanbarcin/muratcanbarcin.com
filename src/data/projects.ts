@@ -81,8 +81,16 @@ export const projects: readonly Project[] = [
     status: "completed",
     featured: true,
     award: { en: "TEKNOFEST Finalist", tr: "TEKNOFEST Finalisti" },
+    githubSync: {
+      enabled: true,
+      repo: "muratcanbarcin/AI-Supported-Lightweight-C4ISR-Prototype-SINAPS",
+      branch: "Main",
+      injectToAI: true,
+      syncArchitectureMedia: true,
+    },
   },
   {
+    // Proprietary Sun Group source. githubSync stays unset so GitHub is never called.
     id: "sun-group-expense",
     slug: "expense-saas",
     title: "Expense — AI-Powered B2B Expense SaaS",
@@ -201,8 +209,16 @@ export const projects: readonly Project[] = [
     links: [],
     status: "completed",
     featured: false,
+    githubSync: {
+      enabled: true,
+      repo: "muratcanbarcin/EnterpriseAgentForSSO",
+      branch: "master",
+      injectToAI: true,
+      syncArchitectureMedia: true,
+    },
   },
   {
+    // No public repository is published. githubSync stays unset so GitHub is never called.
     id: "sleepflow-ai",
     slug: "sleepflow-ai",
     title: "SleepFlow.AI",
@@ -325,5 +341,12 @@ export const projects: readonly Project[] = [
     links: [],
     status: "completed",
     featured: false,
+    githubSync: {
+      enabled: true,
+      repo: "muratcanbarcin/Karma-Web-App",
+      branch: "master",
+      injectToAI: true,
+      syncArchitectureMedia: true,
+    },
   },
 ];

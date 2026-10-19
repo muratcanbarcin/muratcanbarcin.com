@@ -1,111 +1,150 @@
 import { portfolioData } from "@/data/portfolioData";
-import type { Project } from "@/types";
+import type { MediaAsset, Project } from "@/types";
 
-/** README and repository metadata stay fresh for 24 hours, then Next.js revalidates them. */
+/** README content stays fresh for 24 hours, then Next.js revalidates it. */
 export const GITHUB_REVALIDATE_SECONDS = 86_400;
 
-const GITHUB_OWNER = "muratcanbarcin";
+const DEFAULT_BRANCH = "main";
+const REPO_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const DIAGRAM_HOSTS = new Set(["raw.githubusercontent.com", "github.com"]);
 
 export interface ReadmeDiagram {
   alt: string;
   url: string;
 }
 
-export interface ProjectReadme {
-  repoName: string;
-  projectTitle: string;
+export interface SyncedRepository {
+  projectId: string;
+  repo: string;
+  branch: string;
   summary: string;
-  diagrams: ReadmeDiagram[];
-  repositoryUrl: string | null;
+  diagrams: readonly ReadmeDiagram[];
   source: "github" | "fallback";
 }
 
-interface RepoMetadata {
-  htmlUrl: string | null;
-  description: string | null;
+/** Projects whose config explicitly turns GitHub sync on. Everything else is ignored. */
+export function selectWhitelistedProjects(projects: readonly Project[]): Project[] {
+  return projects.filter((project) => project.githubSync?.enabled === true);
 }
 
-/** Pulls one repository README. A 403, 404, or private repository returns the local portfolio summary. */
-export async function fetchProjectReadme(repoName: string): Promise<ProjectReadme> {
-  const project = findProject(repoName);
-  const fallback = fallbackReadme(repoName, project);
+/**
+ * Fetches README content only for projects with `githubSync.enabled === true`.
+ * A 403, 404, or invalid repository falls back to the local description and leaves media untouched.
+ */
+export async function syncWhitelistedProjects(
+  projects: readonly Project[] = portfolioData.projects,
+): Promise<ReadonlyMap<string, SyncedRepository>> {
+  const synced = new Map<string, SyncedRepository>();
+  const eligible = selectWhitelistedProjects(projects);
+
+  await Promise.all(
+    eligible.map(async (project) => {
+      const config = project.githubSync;
+      if (!config?.enabled) return;
+      synced.set(project.id, await syncProject(project, config.repo, config.branch));
+    }),
+  );
+
+  return synced;
+}
+
+/** MCB.ai context. Only enabled projects with `injectToAI !== false` are included. */
+export async function loadGithubPromptContext(
+  projects: readonly Project[] = portfolioData.projects,
+): Promise<string> {
+  const synced = await syncWhitelistedProjects(projects);
+  const blocks: string[] = [];
+
+  for (const project of projects) {
+    const config = project.githubSync;
+    if (!config?.enabled || config.injectToAI === false) continue;
+    const row = synced.get(project.id);
+    blocks.push(`[SYNCHRONIZED REPOSITORY CONTEXT: ${project.title}]`);
+    blocks.push(row?.summary || localSummary(project));
+  }
+
+  return blocks.join("\n\n");
+}
+
+/** Appends remote architecture diagrams onto local media. Failed syncs keep the static media array. */
+export async function loadShowcaseProjects(
+  projects: readonly Project[] = portfolioData.projects,
+): Promise<readonly Project[]> {
   try {
-    const [markdown, metadata] = await Promise.all([fetchReadmeMarkdown(repoName), fetchRepoMetadata(repoName)]);
-    if (markdown === null) {
-      return { ...fallback, repositoryUrl: metadata.htmlUrl ?? fallback.repositoryUrl };
-    }
-    const parsed = parseReadme(markdown, repoName);
-    return {
-      repoName,
-      projectTitle: project?.title ?? repoName,
-      summary: parsed.summary || metadata.description || fallback.summary,
-      diagrams: parsed.diagrams,
-      repositoryUrl: metadata.htmlUrl ?? `https://github.com/${GITHUB_OWNER}/${repoName}`,
-      source: "github",
-    };
+    const synced = await syncWhitelistedProjects(projects);
+    return applySyncedArchitectureMedia(projects, synced);
   } catch (error) {
-    console.warn(`[GitHub] Ingestion failed for ${repoName}. Using the local portfolio summary.`, error);
-    return fallback;
+    console.warn("[GitHub] Media sync skipped. Using local project media.", error);
+    return projects;
   }
 }
 
-/** Cached repository context appended to the MCB.ai system prompt. */
-export async function loadGithubPromptContext(): Promise<string> {
-  const reads = await Promise.all(portfolioData.projects.map((project) => fetchProjectReadme(project.slug)));
-  const lines = ["REPOSITORY CONTEXT (refreshed every 24 hours)", "Use these README summaries and topology links. Do not invent repositories."];
-  for (const read of reads) {
-    lines.push(`- ${read.projectTitle} (${GITHUB_OWNER}/${read.repoName}) [${read.source}]`);
-    lines.push(`  Summary: ${read.summary}`);
-    if (read.repositoryUrl) lines.push(`  Repository: ${read.repositoryUrl}`);
-    if (read.diagrams.length === 0) {
-      lines.push("  Topology: none published");
-    } else {
-      for (const diagram of read.diagrams) lines.push(`  Topology: ${diagram.alt} — ${diagram.url}`);
-    }
-  }
-  return lines.join("\n");
+export function applySyncedArchitectureMedia(
+  projects: readonly Project[],
+  synced: ReadonlyMap<string, SyncedRepository>,
+): readonly Project[] {
+  return projects.map((project) => {
+    const config = project.githubSync;
+    if (!config?.enabled || config.syncArchitectureMedia === false) return project;
+    const row = synced.get(project.id);
+    if (!row || row.source !== "github" || row.diagrams.length === 0) return project;
+
+    const remote = row.diagrams.filter((diagram) => isShowcaseHost(diagram.url)).map((diagram) => toMediaAsset(project, diagram));
+    if (remote.length === 0) return project;
+    return { ...project, media: [...project.media, ...remote] };
+  });
 }
 
-export function parseReadme(markdown: string, repoName: string): { summary: string; diagrams: ReadmeDiagram[] } {
+export function parseReadme(
+  markdown: string,
+  repo: string,
+  branch: string,
+): { summary: string; diagrams: ReadmeDiagram[] } {
   const diagrams: ReadmeDiagram[] = [];
   for (const match of markdown.matchAll(/!\[([^\]]*)\]\(([^)\s]+)\)/g)) {
     const alt = (match[1] ?? "").trim();
     const target = match[2] ?? "";
-    if (!/architecture|topology/i.test(alt)) continue;
-    diagrams.push({ alt, url: absoluteDiagramUrl(repoName, target) });
+    if (!/architecture|topology/i.test(alt) && !/architecture|topology/i.test(target)) continue;
+    const url = absoluteDiagramUrl(repo, branch, target);
+    if (!url) continue;
+    diagrams.push({ alt: alt || "Architecture", url });
   }
 
-  const prose = markdown
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
-    .replace(/[#>*_`[\]]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  return { summary: prose.slice(0, 400), diagrams };
+  return { summary: sanitizeReadme(markdown).slice(0, 400), diagrams };
 }
 
-function findProject(repoName: string): Project | undefined {
-  return portfolioData.projects.find((project) => project.slug === repoName || project.id === repoName);
+async function syncProject(project: Project, repo: string, branch: string | undefined): Promise<SyncedRepository> {
+  const resolvedBranch = branch?.trim() || DEFAULT_BRANCH;
+  const fallback = fallbackSync(project, repo, resolvedBranch);
+  const coordinates = parseRepo(repo);
+  if (!coordinates) {
+    console.warn(`[GitHub] Skipping ${project.id}. Repository must be owner/name.`);
+    return fallback;
+  }
+
+  try {
+    const markdown = await fetchReadmeMarkdown(coordinates.owner, coordinates.name, resolvedBranch);
+    if (markdown === null) return fallback;
+    const wantsMedia = project.githubSync?.syncArchitectureMedia !== false;
+    const parsed = parseReadme(markdown, `${coordinates.owner}/${coordinates.name}`, resolvedBranch);
+    return {
+      projectId: project.id,
+      repo: `${coordinates.owner}/${coordinates.name}`,
+      branch: resolvedBranch,
+      summary: parsed.summary || fallback.summary,
+      diagrams: wantsMedia ? parsed.diagrams : [],
+      source: "github",
+    };
+  } catch (error) {
+    console.warn(`[GitHub] Ingestion failed for ${project.id}. Using the local portfolio summary.`, error);
+    return fallback;
+  }
 }
 
-function fallbackReadme(repoName: string, project: Project | undefined): ProjectReadme {
-  const summary = project
-    ? project.description.en.replace(/\s+/g, " ").trim().slice(0, 400)
-    : "Repository metadata is unavailable.";
-  return {
-    repoName,
-    projectTitle: project?.title ?? repoName,
-    summary,
-    diagrams: [],
-    repositoryUrl: null,
-    source: "fallback",
-  };
-}
-
-async function fetchReadmeMarkdown(repoName: string): Promise<string | null> {
-  const response = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${repoName}/readme`, {
-    headers: githubHeaders("application/vnd.github.raw+json"),
+async function fetchReadmeMarkdown(owner: string, name: string, branch: string): Promise<string | null> {
+  const url = `https://api.github.com/repos/${owner}/${name}/readme?ref=${encodeURIComponent(branch)}`;
+  const response = await fetch(url, {
+    headers: githubHeaders(),
     next: { revalidate: GITHUB_REVALIDATE_SECONDS },
     signal: AbortSignal.timeout(4_000),
   });
@@ -113,24 +152,41 @@ async function fetchReadmeMarkdown(repoName: string): Promise<string | null> {
   return response.text();
 }
 
-async function fetchRepoMetadata(repoName: string): Promise<RepoMetadata> {
-  const response = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${repoName}`, {
-    headers: githubHeaders("application/vnd.github+json"),
-    next: { revalidate: GITHUB_REVALIDATE_SECONDS },
-    signal: AbortSignal.timeout(4_000),
-  });
-  if (!response.ok) return { htmlUrl: null, description: null };
-  const body: unknown = await response.json();
-  if (!isRecord(body)) return { htmlUrl: null, description: null };
+function fallbackSync(project: Project, repo: string, branch: string): SyncedRepository {
   return {
-    htmlUrl: typeof body.html_url === "string" ? body.html_url : null,
-    description: typeof body.description === "string" ? body.description : null,
+    projectId: project.id,
+    repo,
+    branch,
+    summary: localSummary(project),
+    diagrams: [],
+    source: "fallback",
   };
 }
 
-function githubHeaders(accept: string): HeadersInit {
+function localSummary(project: Project): string {
+  return project.description.en.replace(/\s+/g, " ").trim().slice(0, 400);
+}
+
+function sanitizeReadme(markdown: string): string {
+  return markdown
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/[#>*_`[\]]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseRepo(repo: string): { owner: string; name: string } | null {
+  const trimmed = repo.trim();
+  if (!REPO_PATTERN.test(trimmed)) return null;
+  const [owner, name] = trimmed.split("/");
+  if (!owner || !name) return null;
+  return { owner, name };
+}
+
+function githubHeaders(): HeadersInit {
   const headers: Record<string, string> = {
-    Accept: accept,
+    Accept: "application/vnd.github.raw+json",
     "User-Agent": "muratcanbarcin.com",
     "X-GitHub-Api-Version": "2022-11-28",
   };
@@ -139,12 +195,29 @@ function githubHeaders(accept: string): HeadersInit {
   return headers;
 }
 
-function absoluteDiagramUrl(repoName: string, url: string): string {
+function absoluteDiagramUrl(repo: string, branch: string, url: string): string | null {
   if (/^https?:\/\//i.test(url)) return url;
-  const path = url.replace(/^\.?\//, "");
-  return `https://github.com/${GITHUB_OWNER}/${repoName}/raw/HEAD/${path}`;
+  const coordinates = parseRepo(repo);
+  if (!coordinates) return null;
+  const path = url.replace(/^\.\//, "").replace(/^\//, "");
+  if (!path || path.includes("..")) return null;
+  const encoded = path.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+  return `https://raw.githubusercontent.com/${coordinates.owner}/${coordinates.name}/${encodeURIComponent(branch)}/${encoded}`;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+function isShowcaseHost(url: string): boolean {
+  try {
+    return DIAGRAM_HOSTS.has(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
+function toMediaAsset(project: Project, diagram: ReadmeDiagram): MediaAsset {
+  const label = diagram.alt || `${project.title} architecture`;
+  return {
+    type: "diagram",
+    url: diagram.url,
+    alt: { en: label, tr: label },
+  };
 }

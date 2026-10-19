@@ -8,8 +8,10 @@ import { HeroSection } from "@/components/sections/HeroSection";
 import { ProjectShowcase } from "@/components/sections/ProjectShowcase";
 import { ResearchSection } from "@/components/sections/ResearchSection";
 import { SkillsSection } from "@/components/sections/SkillsSection";
+import { loadShowcaseProjects } from "@/services/githubService";
 
-export default function Home() {
+export default async function Home() {
+  const projects = await loadShowcaseProjects();
   return (
     <>
       <Navbar />
@@ -17,7 +19,7 @@ export default function Home() {
         <HeroSection />
         <ExperienceSection />
         <EducationSection />
-        <ProjectShowcase />
+        <ProjectShowcase projects={projects} />
         <ResearchSection />
         <SkillsSection />
         <ContactSection />
