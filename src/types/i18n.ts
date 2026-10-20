@@ -181,6 +181,8 @@ export interface Dictionary {
     docsDiscuss: string;
     openMcb: string;
     contactMurat: string;
+    moreOnGitHub: string;
+    openGitHubProfile: string;
     linkTypes: Record<ProjectLinkType, string>;
   };
   experience: {

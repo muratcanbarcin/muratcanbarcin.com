@@ -198,6 +198,8 @@ export const tr: Dictionary = {
     docsDiscuss: "Bu mimariyi konuşmak ister misiniz?",
     openMcb: "MCB.ai'yi aç",
     contactMurat: "Murat Can ile iletişim",
+    moreOnGitHub: "Daha fazla proje GitHub profilinde.",
+    openGitHubProfile: "GitHub profilini aç",
     linkTypes: {
       github: "Kaynak kod",
       "live-demo": "Canlı demo",

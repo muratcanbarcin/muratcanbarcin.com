@@ -198,6 +198,8 @@ export const en: Dictionary = {
     docsDiscuss: "Want to discuss this architecture?",
     openMcb: "Open MCB.ai",
     contactMurat: "Contact Murat Can",
+    moreOnGitHub: "More projects are on the GitHub profile.",
+    openGitHubProfile: "Open GitHub profile",
     linkTypes: {
       github: "Source code",
       "live-demo": "Live demo",
