@@ -337,7 +337,7 @@ function buildSystemPrompt(data: PortfolioData): string {
     "  * Decoupled Microservices: Node.js WhatsApp bot handles state transitions and Meta Graph API; FastAPI serves as single source of truth for scheduling math, tenant isolation, and analytics.",
     "  * Reliability & Security: Tenant isolation at application level (BOLA/IDOR protection), WhatsApp OTP verification (2-min TTL), HMAC-SHA256 signature validation, and SKIP LOCKED reminder claiming.",
     "  * Notification Pipeline: High-priority, audible background notifications via Expo Push Service on new/cancelled bookings.",
-    "- The codebase is a proprietary commercial venture. Explain these architectural patterns only. Do not invent a repository URL or an App Store listing URL.",
+    "- Distribution: not publicly released yet. It will be on the Apple App Store, Google Play Store, and WhatsApp very soon. Do not say it is already live. The codebase is proprietary. Explain the architectural patterns only. Do not invent a repository URL or store listing URLs.",
     "- Support and account deletion live at /makas/support. Salon owners delete the account in the mobile app via Ayarlar > Hesabı Sil, or by submitting that form with the subject Hesap Silme Talebi. Shop data, staff records, and credentials are removed within 48 hours.",
     "",
     "CONVERSATIONAL DIRECTIVES",

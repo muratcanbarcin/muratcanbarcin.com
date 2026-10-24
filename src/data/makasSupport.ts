@@ -14,11 +14,11 @@ export const MAKAS_SUBJECT_LABELS: Record<MakasSupportSubject, LocalizedString> 
 
 export const makasSupportContent = {
   home: { en: "Home", tr: "Ana sayfa" },
-  eyebrow: { en: "App Store Support", tr: "App Store Destek" },
+  eyebrow: { en: "Support", tr: "Destek" },
   title: { en: "Support and contact", tr: "Destek ve iletişim" },
   lede: {
-    en: "Help for salon owners using the Makas iOS app, and for clients booking through WhatsApp.",
-    tr: "Makas iOS uygulamasını kullanan salon sahipleri ve WhatsApp’tan randevu alan müşteriler için yardım.",
+    en: "Help for salon owners on the mobile app, and for clients booking through WhatsApp.",
+    tr: "Mobil uygulamadaki salon sahipleri ve WhatsApp’tan randevu alan müşteriler için yardım.",
   },
   deletionTitle: { en: "Account and data deletion", tr: "Hesap ve veri silme" },
   deletionGuideline: "Apple App Store Guideline 5.1.1(v)",
@@ -58,8 +58,8 @@ export const makasSupportContent = {
         tr: "Randevu bildirimleri sesli gelmiyor.",
       },
       answer: {
-        en: "A new or cancelled booking sends a high-priority, audible alert to the salon app. If you hear nothing, open iOS Settings → Notifications → Makas and allow notifications and sound. Check that Focus is not silencing Makas, and that the phone is not on silent.",
-        tr: "Yeni veya iptal edilen randevu, salon uygulamasına yüksek öncelikli ve sesli bir bildirim gönderir. Ses yoksa iOS Ayarlar → Bildirimler → Makas bölümünden bildirim iznini ve sesi açın. Odak modunun Makas’ı susturmadığını ve telefonun sessizde olmadığını kontrol edin.",
+        en: "A new or cancelled booking sends a high-priority, audible alert to the salon app. If you hear nothing, open the phone’s notification settings for Makas and allow alerts and sound. Check that Focus or Do Not Disturb is not silencing the app, and that the phone is not on silent.",
+        tr: "Yeni veya iptal edilen randevu, salon uygulamasına yüksek öncelikli ve sesli bir bildirim gönderir. Ses yoksa telefonun bildirim ayarlarından Makas için bildirim ve ses iznini açın. Odak ya da Rahatsız Etme modunun uygulamayı susturmadığını ve telefonun sessizde olmadığını kontrol edin.",
       },
     },
     {

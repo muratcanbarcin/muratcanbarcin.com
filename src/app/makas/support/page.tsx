@@ -4,12 +4,12 @@ import { MakasSupportView } from "@/components/makas/MakasSupportView";
 export const metadata: Metadata = {
   title: "Makas Support",
   description:
-    "Support, frequently asked questions, and account deletion for the Makas salon booking app. Apple App Store Guideline 5.1.1(v).",
+    "Support, frequently asked questions, and account deletion for the Makas salon booking app.",
   alternates: { canonical: "/makas/support" },
   openGraph: {
     title: "Makas Support",
     description:
-      "Support, frequently asked questions, and account deletion for the Makas salon booking app. Apple App Store Guideline 5.1.1(v).",
+      "Support, frequently asked questions, and account deletion for the Makas salon booking app.",
     url: "/makas/support",
   },
 };
