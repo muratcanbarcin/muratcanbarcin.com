@@ -47,7 +47,7 @@ export function ContactSection() {
   return (
     <section id="contact" aria-labelledby="contact-title" className="scroll-mt-24">
       <SectionHeader
-        index="06"
+        index="07"
         command="./contact --init"
         title={t("sections.contact")}
         titleId="contact-title"

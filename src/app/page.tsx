@@ -5,6 +5,7 @@ import { ContactSection } from "@/components/sections/ContactSection";
 import { EducationSection } from "@/components/sections/EducationSection";
 import { ExperienceSection } from "@/components/sections/ExperienceSection";
 import { HeroSection } from "@/components/sections/HeroSection";
+import { MakasSection } from "@/components/sections/MakasSection";
 import { ProjectShowcase } from "@/components/sections/ProjectShowcase";
 import { ResearchSection } from "@/components/sections/ResearchSection";
 import { SkillsSection } from "@/components/sections/SkillsSection";
@@ -20,6 +21,7 @@ export default async function Home() {
         <ExperienceSection />
         <EducationSection />
         <ProjectShowcase projects={projects} />
+        <MakasSection />
         <ResearchSection />
         <SkillsSection />
         <ContactSection />

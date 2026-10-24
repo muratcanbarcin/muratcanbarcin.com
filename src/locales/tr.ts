@@ -12,6 +12,7 @@ export const tr: Dictionary = {
     experience: "Deneyimler",
     education: "Eğitim",
     projects: "Projeler",
+    makas: "Makas",
     publications: "Yayınlar",
     research: "Yayınlar",
     skills: "Yetenekler",

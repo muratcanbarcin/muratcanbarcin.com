@@ -4,7 +4,8 @@ import { useId } from "react";
 import type { FormEvent, ReactNode } from "react";
 import type { MakasSupportField } from "@/types";
 import { MAKAS_SUPPORT_SUBJECTS } from "@/types/makasSupport";
-import { makasSupportContent } from "@/data/makasSupport";
+import { MAKAS_SUBJECT_LABELS, makasSupportContent } from "@/data/makasSupport";
+import { useLocale } from "@/hooks/useLocale";
 import { useMakasSupport } from "@/hooks/useMakasSupport";
 import { MAKAS_SUPPORT_LIMITS } from "@/lib/makasSupportSchema";
 import { actionVariants } from "@/components/ui/action";
@@ -16,6 +17,7 @@ const CONTROL_CLASSES =
 const copy = makasSupportContent;
 
 export function MakasSupportForm() {
+  const { localize } = useLocale();
   const form = useMakasSupport();
   const nameId = useId();
   const emailId = useId();
@@ -25,10 +27,14 @@ export function MakasSupportForm() {
   const messageId = useId();
 
   const fieldError = (field: MakasSupportField) =>
-    form.invalidFields.has(field) ? copy.errors[field] : undefined;
+    form.invalidFields.has(field) ? localize(copy.errors[field]) : undefined;
 
   const requestError =
-    form.status === "rate-limited" ? copy.errors.rateLimited : form.status === "error" ? copy.errors.generic : undefined;
+    form.status === "rate-limited"
+      ? localize(copy.errors.rateLimited)
+      : form.status === "error"
+        ? localize(copy.errors.generic)
+        : undefined;
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -39,17 +45,17 @@ export function MakasSupportForm() {
     return (
       <section id="talep" aria-labelledby="makas-form-title" className="scroll-mt-8 rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6">
         <h2 id="makas-form-title" className="font-mono text-[11px] tracking-wider text-zinc-500 uppercase">
-          {copy.formTitle}
+          {localize(copy.formTitle)}
         </h2>
         <p role="status" className="mt-3 text-sm leading-relaxed text-emerald-300">
-          {copy.success}
+          {localize(copy.success)}
         </p>
         <button
           type="button"
           onClick={form.reset}
           className={cn(actionVariants({ intent: "secondary", size: "lg" }), "mt-5 font-mono text-[13px]")}
         >
-          {copy.sendAnother}
+          {localize(copy.sendAnother)}
         </button>
       </section>
     );
@@ -59,13 +65,13 @@ export function MakasSupportForm() {
     <section id="talep" aria-labelledby="makas-form-title" className="scroll-mt-8 rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6">
       <div className="flex flex-col gap-1.5">
         <h2 id="makas-form-title" className="font-mono text-[11px] tracking-wider text-zinc-500 uppercase">
-          {copy.formTitle}
+          {localize(copy.formTitle)}
         </h2>
-        <p className="text-sm leading-relaxed text-zinc-400">{copy.formIntro}</p>
+        <p className="text-sm leading-relaxed text-zinc-400">{localize(copy.formIntro)}</p>
       </div>
 
       <form noValidate onSubmit={submit} className="mt-5 grid gap-4">
-        <Field label={copy.labels.name} htmlFor={nameId} error={fieldError("name")} required>
+        <Field label={localize(copy.labels.name)} htmlFor={nameId} error={fieldError("name")} required>
           <input
             id={nameId}
             name="name"
@@ -75,13 +81,13 @@ export function MakasSupportForm() {
             maxLength={MAKAS_SUPPORT_LIMITS.name}
             value={form.values.name}
             onChange={(event) => form.setField("name", event.target.value)}
-            placeholder={copy.placeholders.name}
+            placeholder={localize(copy.placeholders.name)}
             aria-invalid={fieldError("name") ? true : undefined}
             aria-describedby={fieldError("name") ? `${nameId}-error` : undefined}
             className={cn(CONTROL_CLASSES, "h-11", fieldError("name") && "border-red-500/50")}
           />
         </Field>
-        <Field label={copy.labels.email} htmlFor={emailId} error={fieldError("email")} required>
+        <Field label={localize(copy.labels.email)} htmlFor={emailId} error={fieldError("email")} required>
           <input
             id={emailId}
             name="email"
@@ -94,13 +100,13 @@ export function MakasSupportForm() {
             maxLength={MAKAS_SUPPORT_LIMITS.email}
             value={form.values.email}
             onChange={(event) => form.setField("email", event.target.value)}
-            placeholder={copy.placeholders.email}
+            placeholder={localize(copy.placeholders.email)}
             aria-invalid={fieldError("email") ? true : undefined}
             aria-describedby={fieldError("email") ? `${emailId}-error` : undefined}
             className={cn(CONTROL_CLASSES, "h-11", fieldError("email") && "border-red-500/50")}
           />
         </Field>
-        <Field label={copy.labels.phone} htmlFor={phoneId} error={fieldError("phone")}>
+        <Field label={localize(copy.labels.phone)} htmlFor={phoneId} error={fieldError("phone")}>
           <input
             id={phoneId}
             name="phone"
@@ -110,13 +116,13 @@ export function MakasSupportForm() {
             maxLength={MAKAS_SUPPORT_LIMITS.phone}
             value={form.values.phone}
             onChange={(event) => form.setField("phone", event.target.value)}
-            placeholder={copy.placeholders.phone}
+            placeholder={localize(copy.placeholders.phone)}
             aria-invalid={fieldError("phone") ? true : undefined}
             aria-describedby={fieldError("phone") ? `${phoneId}-error` : undefined}
             className={cn(CONTROL_CLASSES, "h-11", fieldError("phone") && "border-red-500/50")}
           />
         </Field>
-        <Field label={copy.labels.shopName} htmlFor={shopId} error={fieldError("shopName")}>
+        <Field label={localize(copy.labels.shopName)} htmlFor={shopId} error={fieldError("shopName")}>
           <input
             id={shopId}
             name="shopName"
@@ -125,13 +131,13 @@ export function MakasSupportForm() {
             maxLength={MAKAS_SUPPORT_LIMITS.shopName}
             value={form.values.shopName}
             onChange={(event) => form.setField("shopName", event.target.value)}
-            placeholder={copy.placeholders.shopName}
+            placeholder={localize(copy.placeholders.shopName)}
             aria-invalid={fieldError("shopName") ? true : undefined}
             aria-describedby={fieldError("shopName") ? `${shopId}-error` : undefined}
             className={cn(CONTROL_CLASSES, "h-11", fieldError("shopName") && "border-red-500/50")}
           />
         </Field>
-        <Field label={copy.labels.subject} htmlFor={subjectId} error={fieldError("subject")} required>
+        <Field label={localize(copy.labels.subject)} htmlFor={subjectId} error={fieldError("subject")} required>
           <select
             id={subjectId}
             name="subject"
@@ -143,16 +149,16 @@ export function MakasSupportForm() {
             className={cn(CONTROL_CLASSES, "h-11", !form.values.subject && "text-zinc-500", fieldError("subject") && "border-red-500/50")}
           >
             <option value="" disabled>
-              {copy.placeholders.subject}
+              {localize(copy.placeholders.subject)}
             </option>
             {MAKAS_SUPPORT_SUBJECTS.map((subject) => (
               <option key={subject} value={subject}>
-                {subject}
+                {localize(MAKAS_SUBJECT_LABELS[subject])}
               </option>
             ))}
           </select>
         </Field>
-        <Field label={copy.labels.message} htmlFor={messageId} error={fieldError("message")} required>
+        <Field label={localize(copy.labels.message)} htmlFor={messageId} error={fieldError("message")} required>
           <textarea
             id={messageId}
             name="message"
@@ -161,7 +167,7 @@ export function MakasSupportForm() {
             maxLength={MAKAS_SUPPORT_LIMITS.message}
             value={form.values.message}
             onChange={(event) => form.setField("message", event.target.value)}
-            placeholder={copy.placeholders.message}
+            placeholder={localize(copy.placeholders.message)}
             aria-invalid={fieldError("message") ? true : undefined}
             aria-describedby={fieldError("message") ? `${messageId}-error` : undefined}
             className={cn(CONTROL_CLASSES, "min-h-32 resize-y py-2.5", fieldError("message") && "border-red-500/50")}
@@ -187,7 +193,7 @@ export function MakasSupportForm() {
               className="size-4 animate-spin rounded-full border-2 border-zinc-950/30 border-t-zinc-950"
             />
           )}
-          {form.status === "submitting" ? copy.submitting : copy.submit}
+          {form.status === "submitting" ? localize(copy.submitting) : localize(copy.submit)}
         </button>
       </form>
     </section>

@@ -17,6 +17,7 @@ export interface Dictionary {
     experience: string;
     education: string;
     projects: string;
+    makas: string;
     publications: string;
     research: string;
     skills: string;

@@ -23,7 +23,7 @@ export function ResearchSection() {
   return (
     <section id="research" aria-labelledby="research-title" className="scroll-mt-24">
       <SectionHeader
-        index="04"
+        index="05"
         command="cat ./research/*.md"
         title={t("sections.publications")}
         titleId="research-title"

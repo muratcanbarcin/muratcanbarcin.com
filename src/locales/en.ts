@@ -12,6 +12,7 @@ export const en: Dictionary = {
     experience: "Experience",
     education: "Education",
     projects: "Projects",
+    makas: "Makas",
     publications: "Publications",
     research: "Publications",
     skills: "Skills",
