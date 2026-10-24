@@ -1,6 +1,9 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { MakasSupportForm } from "@/components/makas/MakasSupportForm";
 import { contact } from "@/data/contact";
 import { makasSupportContent } from "@/data/makasSupport";
@@ -13,9 +16,9 @@ export function MakasSupportView() {
   const { currentLocale, localize } = useLocale();
 
   return (
-    <div lang={currentLocale} className="dark scheme-dark min-h-dvh bg-zinc-950 text-zinc-100">
-      <header className="border-b border-zinc-800">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+    <div lang={currentLocale} className="min-h-dvh bg-zinc-950 text-zinc-100">
+      <header className="sticky top-0 z-40 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <img src={MAKAS_MARK_SRC} alt="" width={512} height={512} className="size-11 shrink-0 object-contain" />
             <div className="min-w-0">
@@ -23,7 +26,18 @@ export function MakasSupportView() {
               <p className="truncate text-sm font-semibold tracking-tight">Makas</p>
             </div>
           </div>
-          <LanguageSwitcher />
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <Link
+              href="/"
+              aria-label={localize(copy.home)}
+              className="inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2.5 text-sm text-zinc-500 transition-colors hover:text-zinc-100 lg:h-9"
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              {localize(copy.home)}
+            </Link>
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

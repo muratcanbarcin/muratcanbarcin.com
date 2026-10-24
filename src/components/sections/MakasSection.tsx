@@ -44,7 +44,6 @@ export function MakasSection() {
               </p>
             </div>
 
-            <p className="font-mono text-[11px] leading-relaxed text-zinc-500">{makasVenture.flow}</p>
             <TechTagList items={makasVenture.stack} label={t("common.techStack")} />
 
             <Link
@@ -56,21 +55,6 @@ export function MakasSection() {
             </Link>
           </div>
         </div>
-
-        <ul className="grid border-t border-zinc-800 md:grid-cols-3">
-          {makasVenture.pillars.map((pillar, index) => (
-            <li
-              key={pillar.title.en}
-              className={cn(
-                "flex flex-col gap-2 px-5 py-5 sm:px-6",
-                index > 0 && "border-t border-zinc-800 md:border-t-0 md:border-l",
-              )}
-            >
-              <h4 className="text-sm font-medium text-zinc-100">{localize(pillar.title)}</h4>
-              <p className="text-sm leading-relaxed text-pretty text-zinc-400">{localize(pillar.body)}</p>
-            </li>
-          ))}
-        </ul>
       </article>
     </section>
   );

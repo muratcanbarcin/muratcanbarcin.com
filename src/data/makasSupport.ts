@@ -13,6 +13,7 @@ export const MAKAS_SUBJECT_LABELS: Record<MakasSupportSubject, LocalizedString> 
 };
 
 export const makasSupportContent = {
+  home: { en: "Home", tr: "Ana sayfa" },
   eyebrow: { en: "App Store Support", tr: "App Store Destek" },
   title: { en: "Support and contact", tr: "Destek ve iletişim" },
   lede: {
