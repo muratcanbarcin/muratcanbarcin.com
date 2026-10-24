@@ -206,6 +206,7 @@ export const en: Dictionary = {
       paper: "Paper",
       figma: "Design",
       docs: "Docs",
+      support: "Support",
     },
   },
   experience: {

@@ -10,7 +10,7 @@ export interface MediaAsset {
   caption?: LocalizedString;
 }
 
-export type ProjectLinkType = "github" | "live-demo" | "paper" | "figma" | "docs";
+export type ProjectLinkType = "github" | "live-demo" | "paper" | "figma" | "docs" | "support";
 
 export interface ProjectLink {
   type: ProjectLinkType;

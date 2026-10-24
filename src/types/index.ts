@@ -8,6 +8,7 @@ export type * from "./certification";
 export type * from "./profile";
 export type * from "./i18n";
 export type * from "./contact";
+export type * from "./makasSupport";
 export type * from "./navigation";
 export type * from "./terminal";
 export type * from "./console";

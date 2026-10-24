@@ -206,6 +206,7 @@ export const tr: Dictionary = {
       paper: "Makale",
       figma: "Tasarım",
       docs: "Dokümantasyon",
+      support: "Destek",
     },
   },
   experience: {

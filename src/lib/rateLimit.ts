@@ -54,6 +54,9 @@ export const resumeRequestRateLimiter = createSlidingWindowLimiter({ limit: 3, w
 /** Contact inquiries: 3 submissions per 10 minutes per address. */
 export const contactInquiryRateLimiter = createSlidingWindowLimiter({ limit: 3, windowMs: 600_000 });
 
+/** Makas App Store support tickets: 5 submissions per 10 minutes per address. */
+export const makasSupportRateLimiter = createSlidingWindowLimiter({ limit: 5, windowMs: 600_000 });
+
 /** First forwarded address wins; falls back to the direct peer header, then a shared unknown bucket. */
 export function readClientAddress(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");

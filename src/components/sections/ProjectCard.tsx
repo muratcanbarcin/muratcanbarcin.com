@@ -1,6 +1,7 @@
 "use client";
 
-import { BookOpen, ExternalLink, FileText, ImageIcon, Workflow } from "lucide-react";
+import { BookOpen, ExternalLink, FileText, ImageIcon, LifeBuoy, Workflow } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import type { ComponentType, SVGProps } from "react";
 import type { Project, ProjectLinkType, ProjectStatus } from "@/types";
@@ -20,6 +21,7 @@ const LINK_ICONS: Record<ProjectLinkType, ComponentType<SVGProps<SVGSVGElement>>
   paper: FileText,
   figma: ExternalLink,
   docs: BookOpen,
+  support: LifeBuoy,
 };
 
 const STATUS_DOT: Record<ProjectStatus, string> = {
@@ -156,17 +158,26 @@ export function ProjectCard({ project }: { project: Project }) {
           <ul aria-label={t("common.links")} className="flex flex-wrap gap-2">
             {project.links.map((link) => {
               const Icon = LINK_ICONS[link.type];
+              const label = link.label ?? dictionary.projects.linkTypes[link.type];
+              const className = cn(actionVariants({ intent: "secondary", size: "md" }), "font-mono text-xs");
+              const content = (
+                <>
+                  <Icon className="size-3.5" aria-hidden="true" />
+                  {label}
+                </>
+              );
+              const internal = link.url.startsWith("/");
               return (
                 <li key={link.url}>
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={cn(actionVariants({ intent: "secondary", size: "md" }), "font-mono text-xs")}
-                  >
-                    <Icon className="size-3.5" aria-hidden="true" />
-                    {link.label ?? dictionary.projects.linkTypes[link.type]}
-                  </a>
+                  {internal ? (
+                    <Link href={link.url} className={className}>
+                      {content}
+                    </Link>
+                  ) : (
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" className={className}>
+                      {content}
+                    </a>
+                  )}
                 </li>
               );
             })}
