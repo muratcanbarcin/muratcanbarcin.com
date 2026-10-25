@@ -1,6 +1,9 @@
 import { collectInvalidContactFields, contactInquirySchema } from "@/lib/contactInquirySchema";
+import { logError } from "@/lib/logger";
 import { contactInquiryRateLimiter, readClientAddress } from "@/lib/rateLimit";
 import { sendContactNotification } from "@/services/emailService";
+
+const CONTACT_ROUTE = "/api/contact";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
@@ -32,7 +35,11 @@ export async function POST(request: Request) {
     console.info("[Contact Inquiry]", JSON.stringify({ ...parsed.data, receivedAt: new Date().toISOString() }));
     await sendContactNotification(parsed.data);
   } catch (error) {
-    console.error("[Contact Inquiry] Failed to deliver inquiry", error);
+    logError("Contact inquiry delivery failed", {
+      route: CONTACT_ROUTE,
+      error,
+      metadata: { status: 502 },
+    });
     return Response.json({ error: "unavailable" }, { status: 502, headers: NO_STORE });
   }
 

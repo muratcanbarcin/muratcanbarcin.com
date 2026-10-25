@@ -28,6 +28,7 @@ interface SystemLogRow {
   stack_trace: string | null;
   error_stack: string | null;
   metadata: Record<string, unknown> | null;
+  created_at: string;
 }
 
 /** Schedules an error row. The HTTP response is not held for the database write. */
@@ -132,6 +133,7 @@ function logPayload(row: SystemLogRow): Record<string, unknown> {
     route: row.route,
     metadata: row.metadata,
   };
+  if (!missingLogColumns.has("created_at")) payload.created_at = row.created_at;
   if (!missingLogColumns.has("stack_trace")) payload.stack_trace = coerceStack("stack_trace", row.stack_trace);
   if (!missingLogColumns.has("error_stack")) payload.error_stack = coerceStack("error_stack", row.error_stack);
   return payload;
@@ -157,6 +159,7 @@ function toRow(level: LogLevel, message: string, context?: ErrorLogContext): Sys
     stack_trace: stack,
     error_stack: stack,
     metadata,
+    created_at: new Date().toISOString(),
   };
 }
 

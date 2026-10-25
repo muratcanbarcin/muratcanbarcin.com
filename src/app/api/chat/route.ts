@@ -7,6 +7,7 @@ import { inferLocale, isLocale } from "@/lib/i18n";
 import { logError, logWarn } from "@/lib/logger";
 import { chatRateLimiter, readClientAddress } from "@/lib/rateLimit";
 import { createTokenStream, isTier2ModelError, streamPortfolioChat } from "@/services/aiService";
+import { sendInteractionAlert } from "@/services/telegramService";
 
 const CHAT_ROUTE = "/api/chat";
 
@@ -117,7 +118,15 @@ export async function POST(request: Request) {
         "Cache-Control": "no-store",
         "X-Accel-Buffering": "no",
       },
-      stream: createTokenStream(watchChatStream(result.text, result.modelId)),
+      stream: createTokenStream(
+        watchChatStream(result.text, {
+          modelId: result.modelId,
+          isFailover: result.failedOver,
+          prompt: userPrompt,
+          locale,
+          sessionId,
+        }),
+      ),
     });
   } catch (failure) {
     if (isTier2ModelError(failure)) {
@@ -142,13 +151,26 @@ export async function POST(request: Request) {
   }
 }
 
-function watchChatStream(source: AsyncIterable<string>, modelId: string): AsyncIterable<string> {
+interface CompletedChatWatch {
+  modelId: string;
+  isFailover: boolean;
+  prompt: string;
+  locale: string;
+  sessionId: string;
+}
+
+/** Yields tokens to the visitor, then dispatches the Telegram card once the stream completes. */
+function watchChatStream(source: AsyncIterable<string>, watch: CompletedChatWatch): AsyncIterable<string> {
   return {
     async *[Symbol.asyncIterator]() {
+      let response = "";
       try {
-        yield* source;
+        for await (const chunk of source) {
+          response += chunk;
+          yield chunk;
+        }
       } catch (error) {
-        if (modelId === FALLBACK_MODEL_ID) {
+        if (watch.modelId === FALLBACK_MODEL_ID) {
           console.error("[Tier-2 Gemini 3.5 Error Details]:", error);
         } else {
           console.error("[Tier-1 Gemini 3.8 Error Details]:", error);
@@ -156,9 +178,22 @@ function watchChatStream(source: AsyncIterable<string>, modelId: string): AsyncI
         logError("Chat stream failed after the response started", {
           route: CHAT_ROUTE,
           error,
-          metadata: { model: modelId },
+          metadata: { model: watch.modelId },
         });
         throw error;
+      }
+
+      try {
+        sendInteractionAlert({
+          prompt: watch.prompt,
+          response,
+          model: watch.modelId,
+          isFailover: watch.isFailover,
+          locale: watch.locale,
+          sessionId: watch.sessionId,
+        });
+      } catch (error) {
+        console.error("[Telegram] Interaction alert failed", error);
       }
     },
   };

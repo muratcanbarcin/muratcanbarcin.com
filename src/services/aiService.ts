@@ -12,9 +12,9 @@ import {
 } from "@/lib/aiModels";
 import { runAfterResponse } from "@/lib/background";
 import { reserveTier2Slot } from "@/lib/quotaTracker";
-import { insertChatLog, type ChatLogInsert } from "@/lib/supabase";
+import { insertChatLog } from "@/lib/supabase";
 import { loadGithubPromptContext } from "@/services/githubService";
-import { deliverTelegramAlert, formatChatAlert, sendTelegramAlert } from "@/services/telegramService";
+import { sendTelegramAlert } from "@/services/telegramService";
 
 /** Both model attempts share this wall-clock budget, kept below the route's `maxDuration` of 30s. */
 export const CHAT_STREAM_BUDGET_MS = 26_000;
@@ -194,7 +194,7 @@ async function serveModel(
     timeout: budgetTimeout(deadline, now()),
     onFinish: (text) => {
       if (!audit || !text.trim()) return;
-      runAfterResponse(recordCompletedChat({ ...audit, aiResponse: text, modelUsed: modelId }));
+      runAfterResponse(insertChatLog({ ...audit, aiResponse: text, modelUsed: modelId }));
     },
   });
   const text = await commitTextStream(opened.events);
@@ -222,13 +222,6 @@ function quotaGuardrail(): string {
     `Guide the recruiter to ${email} or the Request Resume button on this site.`,
     "Do not elaborate beyond that.",
   ].join("\n");
-}
-
-async function recordCompletedChat(entry: ChatLogInsert): Promise<void> {
-  await insertChatLog(entry);
-  await deliverTelegramAlert(
-    formatChatAlert({ prompt: entry.userPrompt, model: entry.modelUsed, locale: entry.locale }),
-  );
 }
 
 async function openGoogleModelStream(request: ModelStreamRequest): Promise<OpenedModelStream> {
