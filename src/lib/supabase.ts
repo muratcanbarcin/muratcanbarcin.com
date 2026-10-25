@@ -50,10 +50,24 @@ interface Tier2UsageRow {
 let cached: { url: string; key: string; client: SupabaseClient } | null = null;
 let missingCredentialsWarned = false;
 
+/**
+ * Project URL only. A copied REST base (`https://<ref>.supabase.co/rest/v1`)
+ * makes the client request `/rest/v1/rest/v1/...` and Supabase returns 404.
+ */
+function normalizeSupabaseUrl(rawUrl: string): string {
+  let url = rawUrl.trim();
+  let previous = "";
+  while (url !== previous) {
+    previous = url;
+    url = url.replace(/\/+$/, "").replace(/\/rest\/v1$/, "");
+  }
+  return url;
+}
+
 /** Server-side client. Returns null when credentials are absent so build and local dev keep running. */
 export function getSupabaseAdmin(): SupabaseClient | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || "");
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || "";
   if (!url || !key) {
     if (!missingCredentialsWarned) {
       missingCredentialsWarned = true;

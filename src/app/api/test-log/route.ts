@@ -1,24 +1,48 @@
-import { connection } from "next/server";
-import { logError, logInfo } from "@/lib/logger";
+import { connection, NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
-const TEST_ROUTE = "/api/test-log";
-
-/** Probe used to confirm `system_logs` receives both an error and an info row. */
+/**
+ * Writes one `system_logs` row and returns the Supabase result.
+ * `connection()` keeps the insert on a real request: this app uses Cache Components,
+ * which removes `export const dynamic` and would otherwise prerender the GET.
+ */
 export async function GET() {
   await connection();
 
-  logError("Test error from /api/test-log", {
-    route: TEST_ROUTE,
-    error: new Error("Intentional telemetry probe"),
-    metadata: { probe: true },
-  });
-  logInfo("Test info from /api/test-log", {
-    route: TEST_ROUTE,
-    metadata: { probe: true },
-  });
+  const supabaseAdmin = getSupabaseAdmin();
+  if (!supabaseAdmin) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Supabase client is null. Check environment variables.",
+        env: {
+          has_url: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+          has_service_key: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+        },
+      },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 
-  return Response.json(
-    { success: true, message: "Logs dispatched to Supabase" },
+  const { data, error } = await supabaseAdmin
+    .from("system_logs")
+    .insert({
+      level: "info",
+      route: "/api/test-log",
+      message: "Diagnostic test write from verification route",
+      metadata: { test: true, timestamp: new Date().toISOString() },
+    })
+    .select();
+
+  if (error) {
+    return NextResponse.json(
+      { success: false, supabase_error: error },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
+  return NextResponse.json(
+    { success: true, message: "Log inserted successfully", row: data },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
