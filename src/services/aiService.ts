@@ -1,5 +1,6 @@
 import { APICallError, streamText, type ModelMessage } from "ai";
-import { google, type GoogleLanguageModelOptions } from "@ai-sdk/google";
+import { createGoogleGenerativeAI, type GoogleLanguageModelOptions } from "@ai-sdk/google";
+import { resolveGeminiApiKey } from "@/lib/geminiCredentials";
 import type { ChatTurn, LocalizedString, PortfolioData } from "@/types";
 import { portfolioData } from "@/data/portfolioData";
 import {
@@ -68,7 +69,26 @@ export interface PortfolioChatStream {
   text: AsyncIterable<string>;
   failedOver: boolean;
   /** Present when the primary model failed and the lite model is serving the reply. */
-  failover?: { status?: number; name?: string };
+  failover?: { status?: number; name?: string; error: unknown };
+}
+
+/** Thrown when gemini-3.8-flash failed over and gemini-3.5-flash-lite also failed. */
+export class Tier2ModelError extends Error {
+  readonly tier1Error: unknown;
+  readonly tier2Error: unknown;
+
+  constructor(tier1Error: unknown, tier2Error: unknown) {
+    const message = tier2Error instanceof Error ? tier2Error.message : `${FALLBACK_MODEL_ID} failed`;
+    super(message);
+    this.name = "Tier2ModelError";
+    this.tier1Error = tier1Error;
+    this.tier2Error = tier2Error;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+export function isTier2ModelError(error: unknown): error is Tier2ModelError {
+  return error instanceof Tier2ModelError;
 }
 
 const CONSTRAINED_OUTPUT_TOKENS = 180;
@@ -98,12 +118,16 @@ export async function streamPortfolioChat(
   } catch (error) {
     if (!isFailoverError(error)) throw error;
     console.error(AI_FAILOVER_LOG);
-    const quota = await reserveTier2Slot(new Date(now()));
-    if (quota.shouldAlert) sendTelegramAlert(TIER2_QUOTA_ALERT);
-    const constrained = quota.constrained ? `${system}\n\n${quotaGuardrail()}` : system;
-    const tokens = quota.constrained ? CONSTRAINED_OUTPUT_TOKENS : MAX_OUTPUT_TOKENS;
-    const served = await serveModel(FALLBACK_MODEL_ID, messages, constrained, tokens, deadline, now, openStream, audit);
-    return { ...served, failedOver: true, failover: summarizeFailover(error) };
+    try {
+      const quota = await reserveTier2Slot(new Date(now()));
+      if (quota.shouldAlert) sendTelegramAlert(TIER2_QUOTA_ALERT);
+      const constrained = quota.constrained ? `${system}\n\n${quotaGuardrail()}` : system;
+      const tokens = quota.constrained ? CONSTRAINED_OUTPUT_TOKENS : MAX_OUTPUT_TOKENS;
+      const served = await serveModel(FALLBACK_MODEL_ID, messages, constrained, tokens, deadline, now, openStream, audit);
+      return { ...served, failedOver: true, failover: summarizeFailover(error) };
+    } catch (tier2Error) {
+      throw new Tier2ModelError(error, tier2Error);
+    }
   }
 }
 
@@ -218,8 +242,9 @@ async function openGoogleModelStream(request: ModelStreamRequest): Promise<Opene
     request.onFinish?.(text);
   };
 
+  const apiKey = resolveGeminiApiKey() ?? undefined;
   const result = streamText({
-    model: google(request.modelId),
+    model: createGoogleGenerativeAI({ apiKey })(request.modelId),
     system: request.system,
     messages: [...request.messages],
     maxRetries: 0,
@@ -285,10 +310,10 @@ function replay(
   };
 }
 
-function summarizeFailover(error: unknown): { status?: number; name?: string } {
+function summarizeFailover(error: unknown): { status?: number; name?: string; error: unknown } {
   const status = readStatusCode(error);
   const name = error instanceof Error ? error.name : undefined;
-  return { status, name };
+  return { status, name, error };
 }
 
 function readStatusCode(error: unknown): number | undefined {

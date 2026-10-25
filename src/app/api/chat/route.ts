@@ -1,10 +1,12 @@
 import { createTextStreamResponse } from "ai";
 import { z } from "zod";
+import { FALLBACK_MODEL_ID, PRIMARY_MODEL_ID } from "@/lib/aiModels";
 import { digestKey } from "@/lib/digest";
+import { resolveGeminiApiKey } from "@/lib/geminiCredentials";
 import { inferLocale, isLocale } from "@/lib/i18n";
 import { logError, logWarn } from "@/lib/logger";
 import { chatRateLimiter, readClientAddress } from "@/lib/rateLimit";
-import { createTokenStream, streamPortfolioChat } from "@/services/aiService";
+import { createTokenStream, isTier2ModelError, streamPortfolioChat } from "@/services/aiService";
 
 const CHAT_ROUTE = "/api/chat";
 
@@ -71,8 +73,11 @@ export async function POST(request: Request) {
     return Response.json({ error: "invalid_request" }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
 
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    logError("Gemini API key is not configured", { route: CHAT_ROUTE, metadata: { status: 503 } });
+  if (!resolveGeminiApiKey()) {
+    logError("Gemini API key is not configured", {
+      route: CHAT_ROUTE,
+      metadata: { status: 503, accepted: ["GOOGLE_GENERATIVE_AI_API_KEY", "GEMINI_API_KEY"] },
+    });
     return Response.json({ error: "unavailable" }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
 
@@ -90,6 +95,14 @@ export async function POST(request: Request) {
       ipHash,
     });
     if (result.failedOver) {
+      const error = result.failover?.error;
+      console.error("[Tier-1 Gemini 3.8 Error Details]:", error);
+      console.info("[Tier-2 Gemini 3.5] Executing gemini-3.5-flash-lite.", {
+        model: result.modelId,
+        fallback: FALLBACK_MODEL_ID,
+        status: result.failover?.status,
+        errorName: result.failover?.name,
+      });
       logWarn("Gemini failover from gemini-3.8-flash to gemini-3.5-flash-lite", {
         route: CHAT_ROUTE,
         metadata: {
@@ -106,8 +119,25 @@ export async function POST(request: Request) {
       },
       stream: createTokenStream(watchChatStream(result.text, result.modelId)),
     });
-  } catch (error) {
-    logError("Chat request failed", { route: CHAT_ROUTE, error, metadata: { status: 502 } });
+  } catch (failure) {
+    if (isTier2ModelError(failure)) {
+      const error = failure.tier1Error;
+      console.error("[Tier-1 Gemini 3.8 Error Details]:", error);
+      console.error("[Tier-2 Gemini 3.5 Error Details]:", failure.tier2Error);
+      logError("Chat request failed", {
+        route: CHAT_ROUTE,
+        error: failure.tier2Error,
+        metadata: { status: 502, model: FALLBACK_MODEL_ID, primaryModel: PRIMARY_MODEL_ID },
+      });
+    } else {
+      const error = failure;
+      console.error("[Tier-1 Gemini 3.8 Error Details]:", error);
+      logError("Chat request failed", {
+        route: CHAT_ROUTE,
+        error,
+        metadata: { status: 502, model: PRIMARY_MODEL_ID },
+      });
+    }
     return Response.json({ error: "unavailable" }, { status: 502, headers: { "Cache-Control": "no-store" } });
   }
 }
@@ -118,6 +148,11 @@ function watchChatStream(source: AsyncIterable<string>, modelId: string): AsyncI
       try {
         yield* source;
       } catch (error) {
+        if (modelId === FALLBACK_MODEL_ID) {
+          console.error("[Tier-2 Gemini 3.5 Error Details]:", error);
+        } else {
+          console.error("[Tier-1 Gemini 3.8 Error Details]:", error);
+        }
         logError("Chat stream failed after the response started", {
           route: CHAT_ROUTE,
           error,

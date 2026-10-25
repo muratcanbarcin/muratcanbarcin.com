@@ -31,6 +31,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  *   metadata JSONB
  * );
  * ```
+ *
+ * Live projects are not uniform: the daily counter may be `request_count` or `count`,
+ * and the stack may be `error_stack` or `stack_trace`. Writers send both and drop a column the schema does not have.
  */
 
 export interface ChatLogInsert {
@@ -42,10 +45,16 @@ export interface ChatLogInsert {
   ipHash: string | null;
 }
 
-interface Tier2UsageRow {
-  request_count: number;
+export interface Tier2UsageRow {
+  /** Null when the live table has no `request_count` column or the cell is not a number. */
+  request_count: number | null;
+  /** Null when the live table has no `count` column or the cell is not a number. */
+  count: number | null;
   alert_sent: boolean;
 }
+
+/** Columns already rejected by `tier2_daily_usage`. Later writes skip them. */
+const missingQuotaColumns = new Set<string>();
 
 let cached: { url: string; key: string; client: SupabaseClient } | null = null;
 let missingCredentialsWarned = false;
@@ -64,29 +73,31 @@ function normalizeSupabaseUrl(rawUrl: string): string {
   return url;
 }
 
-/** Server-side client. Returns null when credentials are absent so build and local dev keep running. */
+/** Server-side client. Returns null when credentials are absent so build and local dev keep running. Never throws. */
 export function getSupabaseAdmin(): SupabaseClient | null {
-  const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || "");
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || "";
-  if (!url || !key) {
-    if (!missingCredentialsWarned) {
-      missingCredentialsWarned = true;
-      console.warn(
-        "[Supabase] NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing. Chat logs and quota persistence are disabled.",
-      );
+  try {
+    const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || "");
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || "";
+    if (!url || !key) {
+      if (!missingCredentialsWarned) {
+        missingCredentialsWarned = true;
+        console.warn(
+          "[Supabase] NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing. Chat logs and quota persistence are disabled.",
+        );
+      }
+      return null;
     }
+
+    if (cached?.url === url && cached.key === key) return cached.client;
+    const client = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    cached = { url, key, client };
+    return client;
+  } catch (error) {
+    console.error("[Supabase] Client initialization failed.", error);
     return null;
   }
-
-  if (cached?.url === url && cached.key === key) return cached.client;
-  cached = {
-    url,
-    key,
-    client: createClient(url, key, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    }),
-  };
-  return cached.client;
 }
 
 export async function insertChatLog(entry: ChatLogInsert): Promise<void> {
@@ -118,38 +129,129 @@ export async function insertChatLog(entry: ChatLogInsert): Promise<void> {
 }
 
 export async function readTier2Usage(usageDate: string): Promise<Tier2UsageRow | null> {
-  const client = getSupabaseAdmin();
-  if (!client) return null;
+  try {
+    const client = getSupabaseAdmin();
+    if (!client) return null;
 
-  const { data, error } = await client
-    .from("tier2_daily_usage")
-    .select("request_count, alert_sent")
-    .eq("usage_date", usageDate)
-    .maybeSingle();
+    const { data, error } = await client.from("tier2_daily_usage").select("*").eq("usage_date", usageDate).maybeSingle();
 
-  if (error) {
-    console.warn("[Quota] Could not read daily usage. Using the in-memory counter.", error.message);
+    if (error) {
+      console.error("[Quota] Could not read daily usage. Using the in-memory counter.", error);
+      return null;
+    }
+    return normalizeUsage(data);
+  } catch (error) {
+    console.error("[Quota] Could not read daily usage. Using the in-memory counter.", error);
     return null;
   }
-  if (!data) return { request_count: 0, alert_sent: false };
+}
+
+export async function writeTier2Usage(usageDate: string, count: number, alertSent: boolean): Promise<boolean> {
+  try {
+    const client = getSupabaseAdmin();
+    if (!client) return false;
+
+    let payload = quotaPayload(usageDate, count, alertSent);
+    if (!hasQuotaCounter(payload)) {
+      console.error("[Quota] Neither request_count nor count can be written. Using the in-memory counter.");
+      return false;
+    }
+
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const error = await quotaWriteError(client.from("tier2_daily_usage").upsert(payload));
+      if (!error) return true;
+
+      const missing = missingSchemaColumn(error);
+      if (missing && owns(payload, missing) && !missingQuotaColumns.has(missing)) {
+        missingQuotaColumns.add(missing);
+        console.error("[Quota] Could not persist daily usage. Retrying without the missing column.", error);
+        payload = quotaPayload(usageDate, count, alertSent);
+        if (!hasQuotaCounter(payload)) {
+          console.error("[Quota] Neither request_count nor count can be written. Using the in-memory counter.");
+          return false;
+        }
+        continue;
+      }
+
+      console.error("[Quota] Could not persist daily usage. Using the in-memory counter.", error);
+      return false;
+    }
+
+    console.error("[Quota] Could not persist daily usage. Using the in-memory counter.");
+    return false;
+  } catch (error) {
+    console.error("[Quota] Could not persist daily usage. Using the in-memory counter.", error);
+    return false;
+  }
+}
+
+const MISSING_COLUMN_PATTERN =
+  /could not find the '([^']+)' column|could not find the "([^"]+)" column|column "([^"]+)"(?: of relation "[^"]+")? does not exist/i;
+
+const NULL_COLUMN_PATTERN = /null value in column "([^"]+)"/i;
+
+/** Column named by a PostgREST schema-cache error or a Postgres undefined-column error. */
+export function missingSchemaColumn(error: unknown): string | null {
+  const match = MISSING_COLUMN_PATTERN.exec(schemaErrorText(error));
+  if (!match) return null;
+  return match[1] ?? match[2] ?? match[3] ?? null;
+}
+
+/** Column named by a Postgres NOT NULL violation. */
+export function nullConstraintColumn(error: unknown): string | null {
+  const match = NULL_COLUMN_PATTERN.exec(schemaErrorText(error));
+  return match?.[1] ?? null;
+}
+
+async function quotaWriteError(write: PromiseLike<{ error: unknown }>): Promise<unknown> {
+  try {
+    const { error } = await write;
+    return error;
+  } catch (error) {
+    return error;
+  }
+}
+
+function quotaPayload(usageDate: string, count: number, alertSent: boolean): Record<string, unknown> {
+  const payload: Record<string, unknown> = { usage_date: usageDate };
+  if (!missingQuotaColumns.has("request_count")) payload.request_count = count;
+  if (!missingQuotaColumns.has("count")) payload.count = count;
+  if (!missingQuotaColumns.has("alert_sent")) payload.alert_sent = alertSent;
+  return payload;
+}
+
+function hasQuotaCounter(payload: Record<string, unknown>): boolean {
+  return owns(payload, "request_count") || owns(payload, "count");
+}
+
+function owns(payload: Record<string, unknown>, column: string): boolean {
+  return Object.prototype.hasOwnProperty.call(payload, column);
+}
+
+function normalizeUsage(data: unknown): Tier2UsageRow {
+  if (!isRecord(data)) return { request_count: null, count: null, alert_sent: false };
   return {
-    request_count: typeof data.request_count === "number" ? data.request_count : 0,
+    request_count: finiteNumber(data.request_count),
+    count: finiteNumber(data.count),
     alert_sent: data.alert_sent === true,
   };
 }
 
-export async function writeTier2Usage(usageDate: string, count: number, alertSent: boolean): Promise<boolean> {
-  const client = getSupabaseAdmin();
-  if (!client) return false;
+function finiteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
 
-  const { error } = await client.from("tier2_daily_usage").upsert({
-    usage_date: usageDate,
-    request_count: count,
-    alert_sent: alertSent,
-  });
-  if (error) {
-    console.warn("[Quota] Could not persist daily usage. Using the in-memory counter.", error.message);
-    return false;
-  }
-  return true;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function schemaErrorText(error: unknown): string {
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
+  if (typeof error !== "object" || error === null) return "";
+  const parts: string[] = [];
+  if ("message" in error && typeof error.message === "string") parts.push(error.message);
+  if ("details" in error && typeof error.details === "string") parts.push(error.details);
+  if ("hint" in error && typeof error.hint === "string") parts.push(error.hint);
+  return parts.join(" ");
 }
