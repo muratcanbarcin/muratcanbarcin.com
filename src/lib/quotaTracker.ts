@@ -21,7 +21,7 @@ export async function reserveTier2Slot(now: Date = new Date()): Promise<Tier2Res
   try {
     const persisted = await reservePersisted(day);
     if (persisted) {
-      memory.set(day, { count: persisted.count, alerted: persisted.alerted });
+      memory.set(persisted.day, { count: persisted.count, alerted: persisted.alerted });
       return persisted.reservation;
     }
   } catch (error) {
@@ -32,16 +32,17 @@ export async function reserveTier2Slot(now: Date = new Date()): Promise<Tier2Res
 
 async function reservePersisted(
   day: string,
-): Promise<{ reservation: Tier2Reservation; count: number; alerted: boolean } | null> {
+): Promise<{ reservation: Tier2Reservation; count: number; alerted: boolean; day: string } | null> {
   const current = await readTier2Usage(day);
   if (!current) return null;
 
   const count = persistedCount(current) + 1;
+  const dayKey = persistedDay(current, day);
   const reservation = describe(count, current.alert_sent);
   const alerted = current.alert_sent || reservation.shouldAlert;
-  const saved = await writeTier2Usage(day, count, alerted);
+  const saved = await writeTier2Usage(dayKey, count, alerted);
   if (!saved) return null;
-  return { reservation, count, alerted };
+  return { reservation, count, alerted, day: dayKey };
 }
 
 function reserveMemory(day: string): Tier2Reservation {
@@ -53,16 +54,18 @@ function reserveMemory(day: string): Tier2Reservation {
 }
 
 /**
- * `request_count` and `count` are the same counter under different schemas.
- * A missing column is ignored. When both are present, the higher value wins so a drifted column cannot under-count.
+ * `request_count` / `count` and `usage_date` / `date` name the same fields under different schemas.
+ * A missing column arrives as null and falls through. When both counters are present, the higher value wins.
  */
 function persistedCount(row: Tier2UsageRow): number {
   const requestCount = finite(row.request_count);
   const count = finite(row.count);
-  if (requestCount == null && count == null) return 0;
-  if (requestCount == null) return count ?? 0;
-  if (count == null) return requestCount;
+  if (requestCount == null || count == null) return requestCount ?? count ?? 0;
   return Math.max(requestCount, count);
+}
+
+function persistedDay(row: Tier2UsageRow, fallback: string): string {
+  return row.usage_date ?? row.date ?? fallback;
 }
 
 function finite(value: number | null): number | null {

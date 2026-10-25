@@ -1,25 +1,24 @@
 import { createTextStreamResponse } from "ai";
 import { z } from "zod";
-import { FALLBACK_MODEL_ID, PRIMARY_MODEL_ID } from "@/lib/aiModels";
+import { AI_FAILOVER_LOG, FALLBACK_MODEL_ID, PRIMARY_MODEL_ID } from "@/lib/aiModels";
 import { digestKey } from "@/lib/digest";
 import { resolveGeminiApiKey } from "@/lib/geminiCredentials";
 import { inferLocale, isLocale } from "@/lib/i18n";
 import { logError, logWarn } from "@/lib/logger";
 import { chatRateLimiter, readClientAddress } from "@/lib/rateLimit";
 import { createTokenStream, isTier2ModelError, streamPortfolioChat } from "@/services/aiService";
-import { sendInteractionAlert } from "@/services/telegramService";
 
 const CHAT_ROUTE = "/api/chat";
 
 const MESSAGE_WINDOW = 12;
 
 /**
- * Serverless execution ceiling. Both model attempts in `streamPortfolioChat` share a 26s
- * budget so failover cannot overrun this route.
- * `export const dynamic = "force-dynamic"` is rejected under `cacheComponents`; POST
- * handlers are never cached, and responses already send `Cache-Control: no-store`.
+ * Serverless execution ceiling: Tier 1 10s + Tier 2 27s + 3s for stream close,
+ * Supabase persistence, and the Telegram card.
+ * `export const dynamic` is not valid while `cacheComponents` is enabled (Next.js 16).
+ * POST handlers are uncached, and every response sends `Cache-Control: no-store`.
  */
-export const maxDuration = 30;
+export const maxDuration = 40;
 
 const chatRequestSchema = z
   .object({
@@ -98,12 +97,7 @@ export async function POST(request: Request) {
     if (result.failedOver) {
       const error = result.failover?.error;
       console.error("[Tier-1 Gemini 3.8 Error Details]:", error);
-      console.info("[Tier-2 Gemini 3.5] Executing gemini-3.5-flash-lite.", {
-        model: result.modelId,
-        fallback: FALLBACK_MODEL_ID,
-        status: result.failover?.status,
-        errorName: result.failover?.name,
-      });
+      console.warn(AI_FAILOVER_LOG);
       logWarn("Gemini failover from gemini-3.8-flash to gemini-3.5-flash-lite", {
         route: CHAT_ROUTE,
         metadata: {
@@ -118,15 +112,7 @@ export async function POST(request: Request) {
         "Cache-Control": "no-store",
         "X-Accel-Buffering": "no",
       },
-      stream: createTokenStream(
-        watchChatStream(result.text, {
-          modelId: result.modelId,
-          isFailover: result.failedOver,
-          prompt: userPrompt,
-          locale,
-          sessionId,
-        }),
-      ),
+      stream: createTokenStream(watchChatStream(result.text, result.modelId)),
     });
   } catch (failure) {
     if (isTier2ModelError(failure)) {
@@ -151,26 +137,14 @@ export async function POST(request: Request) {
   }
 }
 
-interface CompletedChatWatch {
-  modelId: string;
-  isFailover: boolean;
-  prompt: string;
-  locale: string;
-  sessionId: string;
-}
-
-/** Yields tokens to the visitor, then dispatches the Telegram card once the stream completes. */
-function watchChatStream(source: AsyncIterable<string>, watch: CompletedChatWatch): AsyncIterable<string> {
+/** Yields tokens to the visitor. Persistence and the Telegram card run from the model `onFinish`. */
+function watchChatStream(source: AsyncIterable<string>, modelId: string): AsyncIterable<string> {
   return {
     async *[Symbol.asyncIterator]() {
-      let response = "";
       try {
-        for await (const chunk of source) {
-          response += chunk;
-          yield chunk;
-        }
+        for await (const chunk of source) yield chunk;
       } catch (error) {
-        if (watch.modelId === FALLBACK_MODEL_ID) {
+        if (modelId === FALLBACK_MODEL_ID) {
           console.error("[Tier-2 Gemini 3.5 Error Details]:", error);
         } else {
           console.error("[Tier-1 Gemini 3.8 Error Details]:", error);
@@ -178,22 +152,9 @@ function watchChatStream(source: AsyncIterable<string>, watch: CompletedChatWatc
         logError("Chat stream failed after the response started", {
           route: CHAT_ROUTE,
           error,
-          metadata: { model: watch.modelId },
+          metadata: { model: modelId },
         });
         throw error;
-      }
-
-      try {
-        sendInteractionAlert({
-          prompt: watch.prompt,
-          response,
-          model: watch.modelId,
-          isFailover: watch.isFailover,
-          locale: watch.locale,
-          sessionId: watch.sessionId,
-        });
-      } catch (error) {
-        console.error("[Telegram] Interaction alert failed", error);
       }
     },
   };

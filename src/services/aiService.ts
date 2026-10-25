@@ -7,18 +7,17 @@ import {
   AI_FAILOVER_LOG,
   FALLBACK_MODEL_ID,
   PRIMARY_MODEL_ID,
+  TIER1_TIMEOUT_MS,
   TIER2_QUOTA_ALERT,
+  TIER2_TIMEOUT_MS,
   type AiModelId,
 } from "@/lib/aiModels";
 import { runAfterResponse } from "@/lib/background";
 import { reserveTier2Slot } from "@/lib/quotaTracker";
 import { insertChatLog } from "@/lib/supabase";
 import { loadGithubPromptContext } from "@/services/githubService";
-import { sendTelegramAlert } from "@/services/telegramService";
+import { sendInteractionAlert, sendTelegramAlert } from "@/services/telegramService";
 
-/** Both model attempts share this wall-clock budget, kept below the route's `maxDuration` of 30s. */
-export const CHAT_STREAM_BUDGET_MS = 26_000;
-const FIRST_CHUNK_TIMEOUT_MS = 8_000;
 const MAX_OUTPUT_TOKENS = 700;
 
 /** Thinking tokens are billed against `maxOutputTokens` and delay the first visible token. */
@@ -33,11 +32,6 @@ export interface ModelStreamEvent {
   reason?: string;
 }
 
-export interface ModelTimeout {
-  totalMs: number;
-  firstChunkMs: number;
-}
-
 /** Visitor context recorded after the served stream finishes. Raw IP addresses are never included. */
 export interface ChatAuditContext {
   sessionId: string;
@@ -49,7 +43,8 @@ export interface ChatAuditContext {
 export interface ModelStreamRequest {
   modelId: AiModelId;
   messages: readonly ModelMessage[];
-  timeout: ModelTimeout;
+  /** Isolated per tier. Tier 2 must never receive Tier 1's signal. */
+  abortSignal: AbortSignal;
   system: string;
   maxOutputTokens: number;
   onFinish?: (text: string) => void;
@@ -95,10 +90,10 @@ const CONSTRAINED_OUTPUT_TOKENS = 180;
 
 /**
  * Dual-model fallback. The primary stream is probed until the first text token or a terminal
- * failure. Quota, rate-limit, timeout, and 5xx failures switch to the lite model before any
+ * failure. Quota, rate-limit, timeout, and HTTP 4xx/5xx failures switch to the lite model before any
  * byte is written to the client, so the visitor only observes one continuous token stream.
- * The fallback only receives whatever remains of the shared budget, so a slow primary can
- * never push the request past the serverless execution limit.
+ * Tier 1 has its own 10s AbortController. Timeout, abort, and HTTP 4xx/5xx switch to
+ * Tier 2, which receives a new controller with a 27s budget and never observes Tier 1's signal.
  * Tier 2 usage is counted before that second attempt. At 85% of its daily cap the prompt
  * collapses to a short reply that points recruiters at email or Request Resume.
  */
@@ -109,49 +104,97 @@ export async function streamPortfolioChat(
   audit?: ChatAuditContext,
 ): Promise<PortfolioChatStream> {
   const messages = toModelMessages(turns);
-  const deadline = now() + CHAT_STREAM_BUDGET_MS;
   const system = await composeSystemPrompt();
+  const tier1 = createTierAttempt(TIER1_TIMEOUT_MS);
 
   try {
-    const served = await serveModel(PRIMARY_MODEL_ID, messages, system, MAX_OUTPUT_TOKENS, deadline, now, openStream, audit);
+    const served = await serveModel(
+      PRIMARY_MODEL_ID,
+      messages,
+      system,
+      MAX_OUTPUT_TOKENS,
+      tier1.signal,
+      false,
+      openStream,
+      audit,
+    );
     return { ...served, failedOver: false };
   } catch (error) {
+    tier1.dispose();
     if (!isFailoverError(error)) throw error;
-    console.error(AI_FAILOVER_LOG);
+    console.error("[Tier-1 Gemini 3.8 Error Details]:", error);
+    console.warn(AI_FAILOVER_LOG);
+
+    const tier2 = createTierAttempt(TIER2_TIMEOUT_MS);
     try {
       const quota = await reserveTier2Slot(new Date(now()));
       if (quota.shouldAlert) sendTelegramAlert(TIER2_QUOTA_ALERT);
       const constrained = quota.constrained ? `${system}\n\n${quotaGuardrail()}` : system;
       const tokens = quota.constrained ? CONSTRAINED_OUTPUT_TOKENS : MAX_OUTPUT_TOKENS;
-      const served = await serveModel(FALLBACK_MODEL_ID, messages, constrained, tokens, deadline, now, openStream, audit);
+      const served = await serveModel(
+        FALLBACK_MODEL_ID,
+        messages,
+        constrained,
+        tokens,
+        tier2.signal,
+        true,
+        openStream,
+        audit,
+      );
       return { ...served, failedOver: true, failover: summarizeFailover(error) };
     } catch (tier2Error) {
+      console.error("[Tier-2 Gemini 3.5 Error Details]:", tier2Error);
       throw new Tier2ModelError(error, tier2Error);
+    } finally {
+      tier2.dispose();
     }
+  } finally {
+    tier1.dispose();
   }
 }
 
-export function budgetTimeout(deadline: number, current: number): ModelTimeout {
-  const totalMs = Math.max(1_000, deadline - current);
-  return { totalMs, firstChunkMs: Math.min(FIRST_CHUNK_TIMEOUT_MS, totalMs) };
+interface TierAttempt {
+  signal: AbortSignal;
+  dispose: () => void;
+}
+
+/** Dedicated timer and signal. `dispose` only clears the timer; it does not abort the sibling tier. */
+function createTierAttempt(timeoutMs: number): TierAttempt {
+  const controller = new AbortController();
+  let settled = false;
+  const timer = setTimeout(() => {
+    if (!settled) controller.abort();
+  }, timeoutMs);
+  return {
+    signal: controller.signal,
+    dispose: () => {
+      settled = true;
+      clearTimeout(timer);
+    },
+  };
 }
 
 export function isFailoverError(error: unknown): boolean {
   const status = readStatusCode(error);
-  if (status === 408 || status === 429) return true;
-  if (status !== undefined && status >= 500 && status <= 599) return true;
+  if (status !== undefined && status >= 400 && status <= 599) return true;
+  return isAbortLike(error);
+}
 
+function isAbortLike(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   if (error.name === "TimeoutError" || error.name === "AbortError") return true;
+  const cause = error.cause instanceof Error ? error.cause : null;
+  if (cause?.name === "TimeoutError" || cause?.name === "AbortError") return true;
 
-  const message = error.message.toLowerCase();
+  const message = `${error.message} ${cause?.message ?? ""}`.toLowerCase();
   return (
     message.includes("429") ||
     message.includes("quota") ||
     message.includes("rate limit") ||
     message.includes("rate-limit") ||
     message.includes("timeout") ||
-    message.includes("timed out")
+    message.includes("timed out") ||
+    message.includes("abort")
   );
 }
 
@@ -181,8 +224,8 @@ async function serveModel(
   messages: readonly ModelMessage[],
   system: string,
   maxOutputTokens: number,
-  deadline: number,
-  now: () => number,
+  abortSignal: AbortSignal,
+  isFailover: boolean,
   openStream: ModelStreamOpener,
   audit: ChatAuditContext | undefined,
 ): Promise<Omit<PortfolioChatStream, "failedOver" | "failover">> {
@@ -191,10 +234,18 @@ async function serveModel(
     messages,
     system,
     maxOutputTokens,
-    timeout: budgetTimeout(deadline, now()),
+    abortSignal,
     onFinish: (text) => {
       if (!audit || !text.trim()) return;
       runAfterResponse(insertChatLog({ ...audit, aiResponse: text, modelUsed: modelId }));
+      sendInteractionAlert({
+        prompt: audit.userPrompt,
+        response: text,
+        model: modelId,
+        isFailover,
+        locale: audit.locale,
+        sessionId: audit.sessionId,
+      });
     },
   });
   const text = await commitTextStream(opened.events);
@@ -242,7 +293,7 @@ async function openGoogleModelStream(request: ModelStreamRequest): Promise<Opene
     messages: [...request.messages],
     maxRetries: 0,
     maxOutputTokens: request.maxOutputTokens,
-    timeout: request.timeout,
+    abortSignal: request.abortSignal,
     providerOptions: PROVIDER_OPTIONS,
     onFinish: (event) => {
       finished = event.text ?? "";

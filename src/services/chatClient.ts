@@ -1,7 +1,7 @@
 import type { ChatErrorKind, ChatTurn, Locale } from "@/types";
 
-/** Slightly above the route's `maxDuration`, which already covers the server-side model failover. */
-const RESPONSE_TIMEOUT_MS = 32_000;
+/** Slightly above the route's `maxDuration` of 40s, which covers both model attempts and cleanup. */
+const RESPONSE_TIMEOUT_MS = 45_000;
 /** Once tokens flow, a gap this long means the stream has stalled. */
 const IDLE_TIMEOUT_MS = 15_000;
 
