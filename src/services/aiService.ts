@@ -5,7 +5,11 @@ import type { ChatTurn, LocalizedString, PortfolioData } from "@/types";
 import { portfolioData } from "@/data/portfolioData";
 import {
   AI_FAILOVER_LOG,
+  CHAT_ROUTE_BUDGET_MS,
+  CONSTRAINED_OUTPUT_TOKENS,
+  CONTINUATION_TIMEOUT_MS,
   FALLBACK_MODEL_ID,
+  MAX_OUTPUT_TOKENS,
   PRIMARY_MODEL_ID,
   TIER1_TIMEOUT_MS,
   TIER2_QUOTA_ALERT,
@@ -18,18 +22,27 @@ import { insertChatLog } from "@/lib/supabase";
 import { loadGithubPromptContext } from "@/services/githubService";
 import { sendInteractionAlert, sendTelegramAlert } from "@/services/telegramService";
 
-const MAX_OUTPUT_TOKENS = 700;
-
-/** Thinking tokens are billed against `maxOutputTokens` and delay the first visible token. */
-const PROVIDER_OPTIONS = {
-  google: { thinkingConfig: { thinkingLevel: "low" } } satisfies GoogleLanguageModelOptions,
-};
+/**
+ * Gemini 3.8 Flash cannot reason below `low`. The lite failover model can stay at `minimal`,
+ * so a capacity failover spends fewer thinking tokens and reaches visible text sooner.
+ * Thoughts are not included in the visitor stream; they still count toward `maxOutputTokens`.
+ */
+function thinkingOptions(modelId: AiModelId): GoogleLanguageModelOptions {
+  if (modelId === FALLBACK_MODEL_ID) {
+    return { thinkingConfig: { thinkingLevel: "minimal" } };
+  }
+  return { thinkingConfig: { thinkingLevel: "low" } };
+}
 
 export interface ModelStreamEvent {
   type: string;
   text?: string;
+  /** Some provider chunks use `delta` until the AI SDK normalizes them to `text`. */
+  delta?: string;
   error?: unknown;
   reason?: string;
+  finishReason?: string;
+  rawFinishReason?: string;
 }
 
 /** Visitor context recorded after the served stream finishes. Raw IP addresses are never included. */
@@ -47,6 +60,8 @@ export interface ModelStreamRequest {
   abortSignal: AbortSignal;
   system: string;
   maxOutputTokens: number;
+  /** Tier 1 stays at 0 so a 503 fails over immediately. Tier 2 retries one capacity blip. */
+  maxRetries?: number;
   onFinish?: (text: string) => void;
 }
 
@@ -86,14 +101,12 @@ export function isTier2ModelError(error: unknown): error is Tier2ModelError {
   return error instanceof Tier2ModelError;
 }
 
-const CONSTRAINED_OUTPUT_TOKENS = 180;
-
 /**
- * Dual-model fallback. The primary stream is probed until the first text token or a terminal
+ * Dual-model fallback. The primary stream is probed until the first visible token or a terminal
  * failure. Quota, rate-limit, timeout, and HTTP 4xx/5xx failures switch to the lite model before any
  * byte is written to the client, so the visitor only observes one continuous token stream.
- * Tier 1 has its own 10s AbortController. Timeout, abort, and HTTP 4xx/5xx switch to
- * Tier 2, which receives a new controller with a 27s budget and never observes Tier 1's signal.
+ * Each tier has its own AbortSignal. The deadline covers silent reasoning up to the first text token
+ * and is released at that token, so a long technical answer is not cut off by the probe timer.
  * Tier 2 usage is counted before that second attempt. At 85% of its daily cap the prompt
  * collapses to a short reply that points recruiters at email or Request Resume.
  */
@@ -102,52 +115,46 @@ export async function streamPortfolioChat(
   openStream: ModelStreamOpener = openGoogleModelStream,
   now: () => number = Date.now,
   audit?: ChatAuditContext,
+  visitorSignal?: AbortSignal,
 ): Promise<PortfolioChatStream> {
+  if (visitorSignal?.aborted) throw visitorAbortError();
+
   const messages = toModelMessages(turns);
   const system = await composeSystemPrompt();
-  const tier1 = createTierAttempt(TIER1_TIMEOUT_MS);
+  const startedAt = now();
+  const tier1 = createTierAttempt(remainingAttemptMs(TIER1_TIMEOUT_MS, startedAt, now));
 
   try {
-    const served = await serveModel(
-      PRIMARY_MODEL_ID,
+    const served = await serveModel({
+      modelId: PRIMARY_MODEL_ID,
       messages,
       system,
-      MAX_OUTPUT_TOKENS,
-      tier1.signal,
-      false,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      attempt: tier1,
+      visitorSignal,
+      isFailover: false,
       openStream,
       audit,
-    );
+      startedAt,
+      now,
+      maxRetries: 0,
+    });
     return { ...served, failedOver: false };
   } catch (error) {
     tier1.dispose();
-    if (!isFailoverError(error)) throw error;
+    if (visitorSignal?.aborted || !isFailoverError(error)) throw error;
     console.error("[Tier-1 Gemini 3.8 Error Details]:", error);
     console.warn(AI_FAILOVER_LOG);
-
-    const tier2 = createTierAttempt(TIER2_TIMEOUT_MS);
-    try {
-      const quota = await reserveTier2Slot(new Date(now()));
-      if (quota.shouldAlert) sendTelegramAlert(TIER2_QUOTA_ALERT);
-      const constrained = quota.constrained ? `${system}\n\n${quotaGuardrail()}` : system;
-      const tokens = quota.constrained ? CONSTRAINED_OUTPUT_TOKENS : MAX_OUTPUT_TOKENS;
-      const served = await serveModel(
-        FALLBACK_MODEL_ID,
-        messages,
-        constrained,
-        tokens,
-        tier2.signal,
-        true,
-        openStream,
-        audit,
-      );
-      return { ...served, failedOver: true, failover: summarizeFailover(error) };
-    } catch (tier2Error) {
-      console.error("[Tier-2 Gemini 3.5 Error Details]:", tier2Error);
-      throw new Tier2ModelError(error, tier2Error);
-    } finally {
-      tier2.dispose();
-    }
+    return serveFallback({
+      messages,
+      system,
+      openStream,
+      audit,
+      visitorSignal,
+      startedAt,
+      now,
+      tier1Error: error,
+    });
   } finally {
     tier1.dispose();
   }
@@ -155,29 +162,132 @@ export async function streamPortfolioChat(
 
 interface TierAttempt {
   signal: AbortSignal;
+  /** Stops the deadline from aborting an answer that has already produced visible text. */
   dispose: () => void;
 }
 
-/** Dedicated timer and signal. `dispose` only clears the timer; it does not abort the sibling tier. */
+interface FinishState {
+  reason?: string;
+}
+
+interface ServeRequest {
+  modelId: AiModelId;
+  messages: readonly ModelMessage[];
+  system: string;
+  maxOutputTokens: number;
+  attempt: TierAttempt;
+  visitorSignal?: AbortSignal;
+  isFailover: boolean;
+  openStream: ModelStreamOpener;
+  audit?: ChatAuditContext;
+  startedAt: number;
+  now: () => number;
+  maxRetries: number;
+}
+
+interface FallbackRequest {
+  messages: readonly ModelMessage[];
+  system: string;
+  openStream: ModelStreamOpener;
+  audit?: ChatAuditContext;
+  visitorSignal?: AbortSignal;
+  startedAt: number;
+  now: () => number;
+  tier1Error: unknown;
+}
+
+/**
+ * The probe timer aborts a linked signal. `dispose` detaches that link before the timer can fire,
+ * including when the timer callback is already queued, so the provider request keeps running.
+ */
 function createTierAttempt(timeoutMs: number): TierAttempt {
-  const controller = new AbortController();
-  let settled = false;
-  const timer = setTimeout(() => {
-    if (!settled) controller.abort();
-  }, timeoutMs);
+  const deadline = new AbortController();
+  const attempt = new AbortController();
+  const onDeadline = () => {
+    if (!attempt.signal.aborted) attempt.abort();
+  };
+
+  if (timeoutMs <= 0) {
+    attempt.abort();
+    return { signal: attempt.signal, dispose: () => undefined };
+  }
+
+  deadline.signal.addEventListener("abort", onDeadline);
+  const timer = setTimeout(() => deadline.abort(), timeoutMs);
+  let disposed = false;
   return {
-    signal: controller.signal,
+    signal: attempt.signal,
     dispose: () => {
-      settled = true;
+      if (disposed) return;
+      disposed = true;
       clearTimeout(timer);
+      deadline.signal.removeEventListener("abort", onDeadline);
     },
   };
 }
 
+function remainingAttemptMs(preferred: number, startedAt: number, now: () => number): number {
+  const remaining = CHAT_ROUTE_BUDGET_MS - (now() - startedAt);
+  return Math.max(0, Math.min(preferred, remaining));
+}
+
+async function serveFallback(request: FallbackRequest): Promise<PortfolioChatStream> {
+  const timeout = remainingAttemptMs(TIER2_TIMEOUT_MS, request.startedAt, request.now);
+  if (timeout < 1_000) throw request.tier1Error;
+
+  const tier2 = createTierAttempt(timeout);
+  try {
+    const quota = await reserveTier2Slot(new Date(request.now()));
+    if (quota.shouldAlert) sendTelegramAlert(TIER2_QUOTA_ALERT);
+    const constrained = quota.constrained ? `${request.system}\n\n${quotaGuardrail()}` : request.system;
+    const tokens = quota.constrained ? CONSTRAINED_OUTPUT_TOKENS : MAX_OUTPUT_TOKENS;
+    const served = await serveModel({
+      modelId: FALLBACK_MODEL_ID,
+      messages: request.messages,
+      system: constrained,
+      maxOutputTokens: tokens,
+      attempt: tier2,
+      visitorSignal: request.visitorSignal,
+      isFailover: true,
+      openStream: request.openStream,
+      audit: request.audit,
+      startedAt: request.startedAt,
+      now: request.now,
+      maxRetries: 1,
+    });
+    return { ...served, failedOver: true, failover: summarizeFailover(request.tier1Error) };
+  } catch (tier2Error) {
+    console.error("[Tier-2 Gemini 3.5 Error Details]:", tier2Error);
+    throw new Tier2ModelError(request.tier1Error, tier2Error);
+  } finally {
+    tier2.dispose();
+  }
+}
+
+/** Thrown when the provider closed the stream before any visible text, so the caller can fail over. */
+class PrematureStreamEndError extends Error {
+  constructor(message = "Model stream ended before any visible text") {
+    super(message);
+    this.name = "PrematureStreamEndError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 export function isFailoverError(error: unknown): boolean {
+  if (error instanceof PrematureStreamEndError) return true;
   const status = readStatusCode(error);
   if (status !== undefined && status >= 400 && status <= 599) return true;
-  return isAbortLike(error);
+  if (isAbortLike(error)) return true;
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+  return (
+    message.includes("502") ||
+    message.includes("503") ||
+    message.includes("504") ||
+    message.includes("overloaded") ||
+    message.includes("capacity") ||
+    message.includes("service unavailable") ||
+    message.includes("currently unavailable")
+  );
 }
 
 function isAbortLike(error: unknown): boolean {
@@ -219,38 +329,46 @@ export function createTokenStream(tokens: AsyncIterable<string>): ReadableStream
   });
 }
 
-async function serveModel(
-  modelId: AiModelId,
-  messages: readonly ModelMessage[],
-  system: string,
-  maxOutputTokens: number,
-  abortSignal: AbortSignal,
-  isFailover: boolean,
-  openStream: ModelStreamOpener,
-  audit: ChatAuditContext | undefined,
-): Promise<Omit<PortfolioChatStream, "failedOver" | "failover">> {
-  const opened = await openStream({
-    modelId,
-    messages,
-    system,
-    maxOutputTokens,
-    abortSignal,
-    onFinish: (text) => {
-      if (!audit || !text.trim()) return;
-      runAfterResponse(insertChatLog({ ...audit, aiResponse: text, modelUsed: modelId }));
-      sendInteractionAlert({
-        prompt: audit.userPrompt,
-        response: text,
-        model: modelId,
-        isFailover,
-        locale: audit.locale,
-        sessionId: audit.sessionId,
-      });
-    },
+async function serveModel(request: ServeRequest): Promise<Omit<PortfolioChatStream, "failedOver" | "failover">> {
+  const finish: FinishState = {};
+  const opened = await request.openStream({
+    modelId: request.modelId,
+    messages: request.messages,
+    system: request.system,
+    maxOutputTokens: request.maxOutputTokens,
+    abortSignal: linkSignals(request.attempt.signal, request.visitorSignal),
+    maxRetries: request.maxRetries,
   });
-  const text = await commitTextStream(opened.events);
-  opened.markServed();
-  return { modelId, text };
+  const probed = await commitTextStream(opened.events, () => {
+    request.attempt.dispose();
+    opened.markServed();
+  }, finish);
+  const continued = continueOnLength(probed, finish, request);
+  const text = collectAudit(continued, (full) => recordAudit(request, full));
+  return { modelId: request.modelId, text };
+}
+
+function linkSignals(attempt: AbortSignal, visitor?: AbortSignal): AbortSignal {
+  if (!visitor) return attempt;
+  return AbortSignal.any([attempt, visitor]);
+}
+
+function recordAudit(request: ServeRequest, text: string): void {
+  const audit = request.audit;
+  if (!audit || !text.trim()) return;
+  try {
+    runAfterResponse(insertChatLog({ ...audit, aiResponse: text, modelUsed: request.modelId }));
+    sendInteractionAlert({
+      prompt: audit.userPrompt,
+      response: text,
+      model: request.modelId,
+      isFailover: request.isFailover,
+      locale: audit.locale,
+      sessionId: audit.sessionId,
+    });
+  } catch (error) {
+    console.error("[Chat] Audit dispatch failed", error);
+  }
 }
 
 async function composeSystemPrompt(): Promise<string> {
@@ -291,10 +409,10 @@ async function openGoogleModelStream(request: ModelStreamRequest): Promise<Opene
     model: createGoogleGenerativeAI({ apiKey })(request.modelId),
     system: request.system,
     messages: [...request.messages],
-    maxRetries: 0,
+    maxRetries: request.maxRetries ?? 0,
     maxOutputTokens: request.maxOutputTokens,
     abortSignal: request.abortSignal,
-    providerOptions: PROVIDER_OPTIONS,
+    providerOptions: { google: thinkingOptions(request.modelId) },
     onFinish: (event) => {
       finished = event.text ?? "";
       flush();
@@ -313,32 +431,41 @@ async function openGoogleModelStream(request: ModelStreamRequest): Promise<Opene
 /**
  * Reads provider events until the first visible token. Errors and aborts before that token
  * reject the promise so the caller can open the fallback model without flushing a partial reply.
+ * The deadline is released on that first token, before the iterator is handed back.
  */
-async function commitTextStream(source: AsyncIterable<ModelStreamEvent>): Promise<AsyncIterable<string>> {
+async function commitTextStream(
+  source: AsyncIterable<ModelStreamEvent>,
+  onVisible: () => void,
+  finish: FinishState,
+): Promise<AsyncIterable<string>> {
   const iterator = source[Symbol.asyncIterator]();
   const buffered: string[] = [];
 
   while (true) {
     const step = await iterator.next();
-    if (step.done) return replay(buffered, iterator);
+    if (step.done) {
+      if (buffered.length === 0) throw new PrematureStreamEndError(emptyStreamMessage(finish.reason));
+      onVisible();
+      return replay(buffered, iterator, finish);
+    }
 
     const part = step.value;
-    if (part.type === "error") throw part.error;
-    if (part.type === "abort") {
-      const timeout = new Error(part.reason ?? "timeout");
-      timeout.name = "TimeoutError";
-      throw timeout;
-    }
-    if (part.type === "text-delta" && part.text) {
-      buffered.push(part.text);
-      return replay(buffered, iterator);
-    }
+    noteFinish(part, finish);
+    if (part.type === "error") rethrowStreamError(part.error);
+    if (part.type === "abort") throw abortError(part.reason);
+
+    const text = readVisibleText(part);
+    if (!text) continue;
+    buffered.push(text);
+    onVisible();
+    return replay(buffered, iterator, finish);
   }
 }
 
 function replay(
   buffered: readonly string[],
   iterator: AsyncIterator<ModelStreamEvent>,
+  finish: FinishState,
 ): AsyncIterable<string> {
   return {
     async *[Symbol.asyncIterator]() {
@@ -347,11 +474,176 @@ function replay(
         const step = await iterator.next();
         if (step.done) return;
         const part = step.value;
-        if (part.type === "text-delta" && part.text) yield part.text;
-        if (part.type === "error") throw part.error;
+        noteFinish(part, finish);
+        if (part.type === "error") rethrowStreamError(part.error);
+        if (part.type === "abort") throw abortError(part.reason);
+        const text = readVisibleText(part);
+        if (text) yield text;
       }
     },
   };
+}
+
+/**
+ * A length stop means reasoning or the reply exhausted `maxOutputTokens` mid-answer.
+ * One follow-up call uses a fresh ceiling and appends only the unseen tail.
+ */
+function continueOnLength(
+  source: AsyncIterable<string>,
+  finish: FinishState,
+  request: ServeRequest,
+): AsyncIterable<string> {
+  return {
+    async *[Symbol.asyncIterator]() {
+      let partial = "";
+      for await (const chunk of source) {
+        partial += chunk;
+        yield chunk;
+      }
+      if (finish.reason !== "length" || partial.trim().length === 0) return;
+
+      const budget = remainingAttemptMs(CONTINUATION_TIMEOUT_MS, request.startedAt, request.now);
+      if (budget < 3_000 || request.visitorSignal?.aborted) return;
+
+      console.warn("[Chat] Output hit the token ceiling. Continuing the answer.");
+      let continuation: AsyncIterable<string>;
+      try {
+        continuation = await openContinuation(request, partial, budget);
+      } catch (error) {
+        console.error("[Chat] Continuation after a length stop failed", error);
+        return;
+      }
+
+      let pending = "";
+      let released = false;
+      try {
+        for await (const chunk of continuation) {
+          if (released) {
+            yield chunk;
+            continue;
+          }
+          pending += chunk;
+          const stripped = stripLeadingOverlap(partial, pending);
+          if (stripped.length !== pending.length || pending.length >= 280) {
+            released = true;
+            if (stripped) yield stripped;
+          }
+        }
+      } catch (error) {
+        console.error("[Chat] Continuation after a length stop failed", error);
+      }
+      if (!released && pending.length > 0) {
+        const stripped = stripLeadingOverlap(partial, pending);
+        if (stripped) yield stripped;
+      }
+    },
+  };
+}
+
+async function openContinuation(request: ServeRequest, partial: string, budget: number): Promise<AsyncIterable<string>> {
+  const attempt = createTierAttempt(budget);
+  try {
+    const opened = await request.openStream({
+      modelId: request.modelId,
+      messages: [
+        ...request.messages,
+        { role: "assistant", content: partial },
+        {
+          role: "user",
+          content:
+            "Kaldığın yerden aynı dilde devam et. Continue in the same language from the exact cutoff. Do not repeat earlier text.",
+        },
+      ],
+      system: `${request.system}\n\nCONTINUATION\nThe previous answer stopped because the token budget was exhausted. Continue in the same language from the exact cutoff. Do not repeat text already written. Do not apologize. Finish the technical answer.`,
+      maxOutputTokens: request.maxOutputTokens,
+      abortSignal: linkSignals(attempt.signal, request.visitorSignal),
+      maxRetries: 0,
+    });
+    const nested: FinishState = {};
+    return await commitTextStream(opened.events, () => {
+      attempt.dispose();
+      opened.markServed();
+    }, nested);
+  } catch (error) {
+    attempt.dispose();
+    throw error;
+  }
+}
+
+function collectAudit(source: AsyncIterable<string>, onDone: (text: string) => void): AsyncIterable<string> {
+  return {
+    async *[Symbol.asyncIterator]() {
+      let text = "";
+      try {
+        for await (const chunk of source) {
+          text += chunk;
+          yield chunk;
+        }
+      } finally {
+        onDone(text);
+      }
+    },
+  };
+}
+
+function readVisibleText(part: ModelStreamEvent): string | undefined {
+  if (part.type !== "text-delta" && part.type !== "text") return undefined;
+  const value = part.text ?? part.delta;
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function noteFinish(part: ModelStreamEvent, finish: FinishState): void {
+  if (finish.reason === "length") return;
+  if (part.type !== "finish" && part.type !== "finish-step") return;
+  if (part.finishReason === "length" || part.rawFinishReason === "MAX_TOKENS" || part.rawFinishReason === "length") {
+    finish.reason = "length";
+    return;
+  }
+  const reason = part.finishReason ?? part.rawFinishReason;
+  if (typeof reason === "string" && reason.length > 0) finish.reason = reason;
+}
+
+function stripLeadingOverlap(prior: string, next: string): string {
+  const limit = Math.min(prior.length, next.length, 400);
+  for (let size = limit; size >= 24; size -= 1) {
+    if (prior.endsWith(next.slice(0, size))) return next.slice(size);
+  }
+  return next;
+}
+
+function emptyStreamMessage(reason: string | undefined): string {
+  return reason === "length"
+    ? "Model stopped on length before any visible text"
+    : "Model stream ended before any visible text";
+}
+
+function abortError(reason: string | undefined): Error {
+  const timeout = new Error(reason ?? "timeout");
+  timeout.name = "TimeoutError";
+  return timeout;
+}
+
+function visitorAbortError(): Error {
+  const error = new Error("The visitor aborted the chat request");
+  error.name = "AbortError";
+  return error;
+}
+
+function rethrowStreamError(error: unknown): never {
+  if (error instanceof Error) throw error;
+  const status = readStatusCode(error);
+  const wrapped = new Error(streamErrorMessage(error));
+  if (status !== undefined) Object.defineProperty(wrapped, "statusCode", { value: status, enumerable: true });
+  throw wrapped;
+}
+
+function streamErrorMessage(error: unknown): string {
+  if (typeof error === "string" && error.length > 0) return error;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const message: unknown = Reflect.get(error, "message");
+    if (typeof message === "string" && message.length > 0) return message;
+  }
+  return "Model stream failed";
 }
 
 function summarizeFailover(error: unknown): { status?: number; name?: string; error: unknown } {

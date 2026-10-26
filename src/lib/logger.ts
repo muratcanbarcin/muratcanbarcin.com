@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { runAfterResponse } from "@/lib/background";
-import { getSupabaseAdmin, missingSchemaColumn, nullConstraintColumn } from "@/lib/supabase";
+import { getSupabaseAdmin, loadTableColumns } from "@/lib/supabase";
+import { adaptiveWrite } from "@/lib/supabaseSchema";
 
 export type LogLevel = "error" | "warn" | "info";
 
@@ -80,72 +81,37 @@ async function writeSystemLog(level: LogLevel, message: string, context?: ErrorL
 }
 
 /**
- * Sends both `stack_trace` and `error_stack`. A column the live schema does not have is removed and the insert is retried.
- * A NOT NULL stack column that received null is retried with an empty string. Failures are logged and never thrown.
+ * Sends both `stack_trace` and `error_stack`. Columns the live table does not have are dropped
+ * before the insert when the catalog is known, and dropped after a schema error when it is not.
+ * A NOT NULL stack or metadata column that received null is retried with an empty fallback.
+ * Recovered mismatches are not logged. The returned promise never rejects.
  */
 async function insertSystemLog(client: SupabaseClient, row: SystemLogRow): Promise<void> {
-  let payload = logPayload(row);
-
   try {
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      const error = await thrownOrReturned(client.from("system_logs").insert(payload));
-      if (!error) return;
-
-      const missing = missingSchemaColumn(error);
-      if (missing && owns(payload, missing) && !missingLogColumns.has(missing)) {
-        missingLogColumns.add(missing);
-        console.error("[Logger] system_logs insert failed", error);
-        payload = logPayload(row);
-        continue;
-      }
-
-      const nullColumn = nullConstraintColumn(error);
-      const nullValue = nullColumn ? payload[nullColumn] : undefined;
-      if (nullColumn && owns(payload, nullColumn) && (nullValue === null || nullValue === undefined) && !emptyStackColumns.has(nullColumn)) {
-        emptyStackColumns.add(nullColumn);
-        console.error("[Logger] system_logs insert failed", error);
-        payload = logPayload(row);
-        continue;
-      }
-
-      console.error("[Logger] system_logs insert failed", error);
-      return;
-    }
+    const columns = await loadTableColumns("system_logs");
+    const result = await adaptiveWrite({
+      columns,
+      missing: missingLogColumns,
+      nullAs: emptyStackColumns,
+      build: (nullAs) => logPayload(row, nullAs),
+      execute: (payload) => client.from("system_logs").insert(payload),
+    });
+    if (!result.ok) console.error("[Logger] system_logs insert failed", result.error);
   } catch (error) {
     console.error("[Logger] system_logs insert failed", error);
   }
 }
 
-/** Supabase reports schema mismatches on `{ error }` or, less often, by rejecting. Both stay inside this function. */
-async function thrownOrReturned(write: PromiseLike<{ error: unknown }>): Promise<unknown> {
-  try {
-    const { error } = await write;
-    return error;
-  } catch (error) {
-    return error;
-  }
-}
-
-function logPayload(row: SystemLogRow): Record<string, unknown> {
-  const payload: Record<string, unknown> = {
+function logPayload(row: SystemLogRow, nullAs: ReadonlySet<string>): Record<string, unknown> {
+  return {
     level: row.level,
     message: row.message,
-    route: row.route,
-    metadata: row.metadata,
+    route: row.route == null && nullAs.has("route") ? "" : row.route,
+    metadata: row.metadata == null && nullAs.has("metadata") ? {} : row.metadata,
+    created_at: row.created_at,
+    stack_trace: row.stack_trace == null && nullAs.has("stack_trace") ? "" : row.stack_trace,
+    error_stack: row.error_stack == null && nullAs.has("error_stack") ? "" : row.error_stack,
   };
-  if (!missingLogColumns.has("created_at")) payload.created_at = row.created_at;
-  if (!missingLogColumns.has("stack_trace")) payload.stack_trace = coerceStack("stack_trace", row.stack_trace);
-  if (!missingLogColumns.has("error_stack")) payload.error_stack = coerceStack("error_stack", row.error_stack);
-  return payload;
-}
-
-function coerceStack(column: string, value: string | null): string | null {
-  if (value === null && emptyStackColumns.has(column)) return "";
-  return value;
-}
-
-function owns(payload: Record<string, unknown>, column: string): boolean {
-  return Object.prototype.hasOwnProperty.call(payload, column);
 }
 
 function toRow(level: LogLevel, message: string, context?: ErrorLogContext): SystemLogRow {

@@ -38,8 +38,9 @@ async function reservePersisted(
 
   const count = persistedCount(current) + 1;
   const dayKey = persistedDay(current, day);
-  const reservation = describe(count, current.alert_sent);
-  const alerted = current.alert_sent || reservation.shouldAlert;
+  const remembered = memory.get(day)?.alerted === true || memory.get(dayKey)?.alerted === true;
+  const reservation = describe(count, current.alert_sent || remembered);
+  const alerted = current.alert_sent || remembered || reservation.shouldAlert;
   const saved = await writeTier2Usage(dayKey, count, alerted);
   if (!saved) return null;
   return { reservation, count, alerted, day: dayKey };

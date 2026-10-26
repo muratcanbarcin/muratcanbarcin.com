@@ -13,12 +13,13 @@ const CHAT_ROUTE = "/api/chat";
 const MESSAGE_WINDOW = 12;
 
 /**
- * Serverless execution ceiling: Tier 1 10s + Tier 2 27s + 3s for stream close,
- * Supabase persistence, and the Telegram card.
+ * Serverless execution ceiling: Tier 1 and Tier 2 each wait for a first visible token
+ * (20s + 25s) inside a 55s active budget, with slack for a length continuation,
+ * stream close, Supabase, and the Telegram card.
  * `export const dynamic` is not valid while `cacheComponents` is enabled (Next.js 16).
  * POST handlers are uncached, and every response sends `Cache-Control: no-store`.
  */
-export const maxDuration = 40;
+export const maxDuration = 60;
 
 const chatRequestSchema = z
   .object({
@@ -88,12 +89,18 @@ export async function POST(request: Request) {
     const address = readClientAddress(request);
     const ipHash = address === "unknown" ? null : digestKey(address);
     const sessionId = digestKey(`${address}|${new Date().toISOString().slice(0, 10)}`);
-    const result = await streamPortfolioChat(messages, undefined, undefined, {
-      sessionId,
-      userPrompt,
-      locale,
-      ipHash,
-    });
+    const result = await streamPortfolioChat(
+      messages,
+      undefined,
+      undefined,
+      {
+        sessionId,
+        userPrompt,
+        locale,
+        ipHash,
+      },
+      request.signal,
+    );
     if (result.failedOver) {
       const error = result.failover?.error;
       console.error("[Tier-1 Gemini 3.8 Error Details]:", error);
@@ -115,6 +122,9 @@ export async function POST(request: Request) {
       stream: createTokenStream(watchChatStream(result.text, result.modelId)),
     });
   } catch (failure) {
+    if (request.signal.aborted) {
+      return new Response(null, { status: 499, headers: { "Cache-Control": "no-store" } });
+    }
     if (isTier2ModelError(failure)) {
       const error = failure.tier1Error;
       console.error("[Tier-1 Gemini 3.8 Error Details]:", error);

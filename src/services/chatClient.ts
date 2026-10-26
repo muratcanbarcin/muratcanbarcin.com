@@ -1,9 +1,12 @@
 import type { ChatErrorKind, ChatTurn, Locale } from "@/types";
 
-/** Slightly above the route's `maxDuration` of 40s, which covers both model attempts and cleanup. */
-const RESPONSE_TIMEOUT_MS = 45_000;
-/** Once tokens flow, a gap this long means the stream has stalled. */
-const IDLE_TIMEOUT_MS = 15_000;
+/** Above the route's `maxDuration` of 60s, so a live failover is not abandoned in the browser. */
+const RESPONSE_TIMEOUT_MS = 75_000;
+/**
+ * Once tokens flow, a gap this long means the socket has stalled.
+ * Reasoning can pause between sentences; a short idle window was cutting answers off.
+ */
+const IDLE_TIMEOUT_MS = 45_000;
 
 export type ChatStreamResult =
   | { status: "completed"; content: string }
@@ -40,7 +43,6 @@ export async function streamChatReply(
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    rearm();
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;

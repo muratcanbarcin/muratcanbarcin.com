@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { adaptiveWrite, missingSchemaColumn, parseOpenApiTables } from "@/lib/supabaseSchema";
 
 /**
  * Run once in the Supabase SQL editor. Chat logs outlive Vercel's one-hour runtime log.
@@ -33,9 +34,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  * ```
  *
  * Live projects are not uniform: the day column may be `usage_date` or `date`, the counter
- * may be `request_count` or `count`, and the stack may be `error_stack` or `stack_trace`.
- * Readers probe the row shape and writers send only columns the table actually has, so a
- * missing column (Postgres 42703) is not queried again.
+ * may be `request_count` or `count`, `alert_sent` may be absent, and the stack may be
+ * `error_stack` or `stack_trace`. The OpenAPI catalog is read once per isolate. Writes
+ * send only columns that exist and retry quietly when the catalog is stale.
  */
 
 export interface ChatLogInsert {
@@ -61,16 +62,23 @@ export interface Tier2UsageRow {
 
 const DATE_COLUMNS = ["usage_date", "date"] as const;
 const COUNT_COLUMNS = ["request_count", "count"] as const;
+const QUOTA_TABLE = "tier2_daily_usage";
+const CHAT_TABLE = "chat_logs";
+
 type DateColumn = (typeof DATE_COLUMNS)[number];
-type CountColumn = (typeof COUNT_COLUMNS)[number];
 
 /** Columns already rejected by `tier2_daily_usage`. Later reads and writes skip them. */
 const missingQuotaColumns = new Set<string>();
-/** Columns observed on a real row. Empty until the table shape is known. */
-let knownDateColumns: readonly DateColumn[] | null = null;
-let knownCountColumns: readonly CountColumn[] | null = null;
-/** `false` once a row proves `alert_sent` is absent. `null` until a row is seen. */
-let knownAlertColumn: boolean | null = null;
+/** NOT NULL columns on `tier2_daily_usage` that must not be sent as null. */
+const quotaNullFallbacks = new Set<string>();
+/** Columns already rejected by `chat_logs`. */
+const missingChatColumns = new Set<string>();
+const chatNullFallbacks = new Set<string>();
+
+const CATALOG_RETRY_MS = 60_000;
+let catalog: Map<string, ReadonlySet<string>> | null = null;
+let catalogFailedAt = 0;
+let catalogInflight: Promise<Map<string, ReadonlySet<string>> | null> | null = null;
 
 let cached: { url: string; key: string; client: SupabaseClient } | null = null;
 let missingCredentialsWarned = false;
@@ -116,63 +124,84 @@ export function getSupabaseAdmin(): SupabaseClient | null {
   }
 }
 
-export async function insertChatLog(entry: ChatLogInsert): Promise<void> {
-  const client = getSupabaseAdmin();
-  if (!client) {
-    console.info(
-      "[Chat Log] Supabase is not configured. Interaction kept in the server log only.",
-      JSON.stringify({
-        sessionId: entry.sessionId,
-        modelUsed: entry.modelUsed,
-        locale: entry.locale,
-        ipHash: entry.ipHash,
-        userPrompt: entry.userPrompt.slice(0, 500),
-        aiResponse: entry.aiResponse.slice(0, 500),
-      }),
-    );
-    return;
+/** Columns PostgREST advertises for `table`. Null when the catalog cannot be read; callers then adapt per error. */
+export async function loadTableColumns(table: string): Promise<ReadonlySet<string> | null> {
+  try {
+    const tables = await loadCatalog();
+    return tables?.get(table) ?? null;
+  } catch {
+    catalogFailedAt = Date.now();
+    return null;
   }
+}
 
-  const { error } = await client.from("chat_logs").insert({
-    session_id: entry.sessionId,
-    user_prompt: entry.userPrompt,
-    ai_response: entry.aiResponse,
-    model_used: entry.modelUsed,
-    locale: entry.locale,
-    ip_hash: entry.ipHash,
-  });
-  if (error) console.error("[Chat Log] Insert failed", error.message);
+export async function insertChatLog(entry: ChatLogInsert): Promise<void> {
+  try {
+    const client = getSupabaseAdmin();
+    if (!client) {
+      console.info(
+        "[Chat Log] Supabase is not configured. Interaction kept in the server log only.",
+        JSON.stringify({
+          sessionId: entry.sessionId,
+          modelUsed: entry.modelUsed,
+          locale: entry.locale,
+          ipHash: entry.ipHash,
+          userPrompt: entry.userPrompt.slice(0, 500),
+          aiResponse: entry.aiResponse.slice(0, 500),
+        }),
+      );
+      return;
+    }
+
+    const columns = await loadTableColumns(CHAT_TABLE);
+    const result = await adaptiveWrite({
+      columns,
+      missing: missingChatColumns,
+      nullAs: chatNullFallbacks,
+      build: (nullAs) => ({
+        session_id: entry.sessionId,
+        user_prompt: entry.userPrompt,
+        ai_response: entry.aiResponse,
+        model_used: entry.modelUsed,
+        locale: entry.locale,
+        ip_hash: entry.ipHash == null && nullAs.has("ip_hash") ? "" : entry.ipHash,
+      }),
+      execute: (payload) => client.from(CHAT_TABLE).insert(payload),
+    });
+    if (!result.ok) console.error("[Chat Log] Insert failed", result.error);
+  } catch (error) {
+    console.error("[Chat Log] Insert failed", error);
+  }
 }
 
 export async function readTier2Usage(usageDate: string): Promise<Tier2UsageRow | null> {
   try {
     const client = getSupabaseAdmin();
     if (!client) return null;
-    if (!knownDateColumns) await probeQuotaShape(client);
 
-    for (const column of dateColumnCandidates()) {
-      const { data, error } = await client.from("tier2_daily_usage").select("*").eq(column, usageDate).maybeSingle();
-      if (!error) {
-        if (isRecord(data)) {
-          rememberQuotaShape(data);
-          return normalizeUsage(data);
-        }
-        rememberDateColumn(column);
-        const alternateExists = knownDateColumns?.some((item) => item !== column && !missingQuotaColumns.has(item)) ?? false;
-        if (alternateExists) continue;
-        return normalizeUsage(data);
-      }
-
-      if (isMissingQuotaColumn(error, column)) {
-        missingQuotaColumns.add(column);
-        knownDateColumns = knownDateColumns?.filter((item) => item !== column) ?? null;
-        console.warn(`[Quota] ${column} is not on tier2_daily_usage. Using the alternate day column.`);
-        continue;
-      }
-
-      console.error("[Quota] Could not read daily usage. Using the in-memory counter.", error);
+    const columns = await loadTableColumns(QUOTA_TABLE);
+    const dates = dateColumns(columns);
+    if (dates.length === 0) {
+      console.error("[Quota] Could not read daily usage. Using the in-memory counter.");
       return null;
     }
+
+    let emptyRow: Tier2UsageRow | null = null;
+    for (const column of dates) {
+      const outcome = await readUsageRow(client, column, usageDate);
+      if (outcome.kind === "missing") continue;
+      if (outcome.kind === "failed") {
+        if (emptyRow) return emptyRow;
+        console.error("[Quota] Could not read daily usage. Using the in-memory counter.", outcome.error);
+        return null;
+      }
+      if (isEmptyUsage(outcome.row)) {
+        emptyRow = outcome.row;
+        continue;
+      }
+      return outcome.row;
+    }
+    if (emptyRow) return emptyRow;
 
     console.error("[Quota] Could not read daily usage. Using the in-memory counter.");
     return null;
@@ -187,38 +216,22 @@ export async function writeTier2Usage(usageDate: string, count: number, alertSen
     const client = getSupabaseAdmin();
     if (!client) return false;
 
-    let payload = quotaPayload(usageDate, count, alertSent);
-    if (!hasQuotaIdentity(payload)) {
-      console.error("[Quota] Neither request_count nor count can be written. Using the in-memory counter.");
-      return false;
-    }
-
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      const error = await quotaWriteError(client.from("tier2_daily_usage").upsert(payload));
-      if (!error) {
-        rememberWrittenColumns(payload);
-        return true;
-      }
-
-      const missing = missingSchemaColumn(error);
-      if (missing && owns(payload, missing) && !missingQuotaColumns.has(missing)) {
-        missingQuotaColumns.add(missing);
-        if (isDateColumn(missing)) knownDateColumns = knownDateColumns?.filter((item) => item !== missing) ?? null;
-        if (isCountColumn(missing)) knownCountColumns = knownCountColumns?.filter((item) => item !== missing) ?? null;
-        console.warn(`[Quota] ${missing} is not on tier2_daily_usage. Retrying with the alternate column.`);
-        payload = quotaPayload(usageDate, count, alertSent);
+    const columns = await loadTableColumns(QUOTA_TABLE);
+    const result = await adaptiveWrite({
+      columns,
+      missing: missingQuotaColumns,
+      nullAs: quotaNullFallbacks,
+      build: () => quotaPayload(usageDate, count, alertSent),
+      execute: (payload) => {
         if (!hasQuotaIdentity(payload)) {
-          console.error("[Quota] Neither request_count nor count can be written. Using the in-memory counter.");
-          return false;
+          return Promise.resolve({ error: new Error("Neither a day column nor a counter column can be written") });
         }
-        continue;
-      }
+        return client.from(QUOTA_TABLE).upsert(payload);
+      },
+    });
 
-      console.error("[Quota] Could not persist daily usage. Using the in-memory counter.", error);
-      return false;
-    }
-
-    console.error("[Quota] Could not persist daily usage. Using the in-memory counter.");
+    if (result.ok) return true;
+    console.error("[Quota] Could not persist daily usage. Using the in-memory counter.", result.error);
     return false;
   } catch (error) {
     console.error("[Quota] Could not persist daily usage. Using the in-memory counter.", error);
@@ -226,130 +239,104 @@ export async function writeTier2Usage(usageDate: string, count: number, alertSen
   }
 }
 
-const MISSING_COLUMN_PATTERN =
-  /could not find the '([^']+)' column|could not find the "([^"]+)" column|column "([^"]+)"(?: of relation "[^"]+")? does not exist|column ([a-zA-Z_][a-zA-Z0-9_]*) does not exist/i;
-
-const QUOTA_COLUMN_NAMES = ["usage_date", "date", "request_count", "count", "alert_sent"] as const;
-
-const NULL_COLUMN_PATTERN = /null value in column "([^"]+)"/i;
-
-/** Column named by a PostgREST schema-cache error or a Postgres undefined-column error (42703). */
-export function missingSchemaColumn(error: unknown): string | null {
-  const text = schemaErrorText(error);
-  if (isUndefinedColumnError(error)) {
-    const known = QUOTA_COLUMN_NAMES.find((column) => text.includes(column));
-    if (known) return known;
+async function loadCatalog(): Promise<Map<string, ReadonlySet<string>> | null> {
+  if (catalog) return catalog;
+  if (catalogFailedAt > 0 && Date.now() - catalogFailedAt < CATALOG_RETRY_MS) return null;
+  if (!catalogInflight) {
+    catalogInflight = fetchCatalog()
+      .then((tables) => {
+        if (tables && tables.size > 0) catalog = tables;
+        else catalogFailedAt = Date.now();
+        return tables;
+      })
+      .finally(() => {
+        catalogInflight = null;
+      });
   }
-  const match = MISSING_COLUMN_PATTERN.exec(text);
-  return match?.[1] ?? match?.[2] ?? match?.[3] ?? match?.[4] ?? null;
+  return catalogInflight;
 }
 
-/** Column named by a Postgres NOT NULL violation. */
-export function nullConstraintColumn(error: unknown): string | null {
-  const match = NULL_COLUMN_PATTERN.exec(schemaErrorText(error));
-  return match?.[1] ?? null;
-}
-
-async function quotaWriteError(write: PromiseLike<{ error: unknown }>): Promise<unknown> {
+async function fetchCatalog(): Promise<Map<string, ReadonlySet<string>> | null> {
   try {
-    const { error } = await write;
-    return error;
-  } catch (error) {
-    return error;
+    const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL || "");
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || "";
+    if (!url || !key) return null;
+
+    const response = await fetch(`${url}/rest/v1/`, {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        Accept: "application/openapi+json",
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(2_500),
+    });
+    if (!response.ok) return null;
+    const spec: unknown = await response.json();
+    return parseOpenApiTables(spec);
+  } catch {
+    return null;
   }
+}
+
+type UsageRead = { kind: "row"; row: Tier2UsageRow } | { kind: "missing" } | { kind: "failed"; error: unknown };
+
+async function readUsageRow(client: SupabaseClient, column: DateColumn, usageDate: string): Promise<UsageRead> {
+  try {
+    const { data, error } = await client.from(QUOTA_TABLE).select("*").eq(column, usageDate).maybeSingle();
+    if (error) {
+      if (isMissingQuotaColumn(error, column)) {
+        missingQuotaColumns.add(column);
+        return { kind: "missing" };
+      }
+      return { kind: "failed", error };
+    }
+    return { kind: "row", row: normalizeUsage(data) };
+  } catch (error) {
+    if (isMissingQuotaColumn(error, column)) {
+      missingQuotaColumns.add(column);
+      return { kind: "missing" };
+    }
+    return { kind: "failed", error };
+  }
+}
+
+function isEmptyUsage(row: Tier2UsageRow): boolean {
+  return row.request_count == null && row.count == null && row.usage_date == null && row.date == null;
 }
 
 function quotaPayload(usageDate: string, count: number, alertSent: boolean): Record<string, unknown> {
-  const payload: Record<string, unknown> = {};
-  for (const column of dateColumnsToWrite()) payload[column] = usageDate;
-  for (const column of countColumnsToWrite()) payload[column] = count;
-  if (knownAlertColumn !== false && !missingQuotaColumns.has("alert_sent")) payload.alert_sent = alertSent;
+  const payload: Record<string, unknown> = { alert_sent: alertSent };
+  for (const column of DATE_COLUMNS) payload[column] = usageDate;
+  for (const column of COUNT_COLUMNS) payload[column] = count;
   return payload;
 }
 
 function hasQuotaIdentity(payload: Record<string, unknown>): boolean {
-  const hasDay = owns(payload, "usage_date") || owns(payload, "date");
-  const hasCount = owns(payload, "request_count") || owns(payload, "count");
+  const hasDay = DATE_COLUMNS.some((column) => owns(payload, column));
+  const hasCount = COUNT_COLUMNS.some((column) => owns(payload, column));
   return hasDay && hasCount;
 }
 
-function dateColumnCandidates(): readonly DateColumn[] {
-  const known = knownDateColumns?.filter((column) => !missingQuotaColumns.has(column));
-  if (known && known.length > 0) return known;
-  return DATE_COLUMNS.filter((column) => !missingQuotaColumns.has(column));
-}
-
-function dateColumnsToWrite(): readonly DateColumn[] {
-  const known = knownDateColumns?.filter((column) => !missingQuotaColumns.has(column));
-  if (known && known.length > 0) return known;
-  return dateColumnCandidates().slice(0, 1);
-}
-
-function countColumnsToWrite(): readonly CountColumn[] {
-  const known = knownCountColumns?.filter((column) => !missingQuotaColumns.has(column));
-  if (known && known.length > 0) return known;
-  const remaining = COUNT_COLUMNS.filter((column) => !missingQuotaColumns.has(column));
-  return remaining.slice(0, 1);
-}
-
-async function probeQuotaShape(client: SupabaseClient): Promise<void> {
-  try {
-    const { data, error } = await client.from("tier2_daily_usage").select("*").limit(1);
-    if (error || !Array.isArray(data)) return;
-    const sample = data.find(isRecord);
-    if (sample) rememberQuotaShape(sample);
-  } catch (error) {
-    console.warn("[Quota] Could not inspect tier2_daily_usage columns.", error);
-  }
-}
-
-function rememberQuotaShape(row: Record<string, unknown>): void {
-  const dates = DATE_COLUMNS.filter((column) => Object.prototype.hasOwnProperty.call(row, column));
-  const counts = COUNT_COLUMNS.filter((column) => Object.prototype.hasOwnProperty.call(row, column));
-  if (dates.length > 0) knownDateColumns = dates;
-  if (counts.length > 0) knownCountColumns = counts;
-  knownAlertColumn = Object.prototype.hasOwnProperty.call(row, "alert_sent");
-}
-
-function rememberDateColumn(column: DateColumn): void {
-  if (missingQuotaColumns.has(column)) return;
-  if (!knownDateColumns) {
-    knownDateColumns = [column];
-    return;
-  }
-  if (!knownDateColumns.includes(column)) knownDateColumns = [...knownDateColumns, column];
-}
-
-function rememberWrittenColumns(payload: Record<string, unknown>): void {
-  const dates = DATE_COLUMNS.filter((column) => owns(payload, column));
-  const counts = COUNT_COLUMNS.filter((column) => owns(payload, column));
-  if (dates.length > 0) knownDateColumns = dates;
-  if (counts.length > 0) knownCountColumns = counts;
-}
-
-function isDateColumn(column: string): column is DateColumn {
-  return column === "usage_date" || column === "date";
-}
-
-function isCountColumn(column: string): column is CountColumn {
-  return column === "request_count" || column === "count";
+function dateColumns(columns: ReadonlySet<string> | null): DateColumn[] {
+  const available = DATE_COLUMNS.filter((column) => !missingQuotaColumns.has(column));
+  if (!columns) return [...available];
+  const known = available.filter((column) => columns.has(column));
+  return known.length > 0 ? known : [...available];
 }
 
 function isMissingQuotaColumn(error: unknown, column: string): boolean {
   const missing = missingSchemaColumn(error);
-  return missing === column || (missing == null && isUndefinedColumnError(error));
-}
-
-function isUndefinedColumnError(error: unknown): boolean {
+  if (missing === column) return true;
+  if (missing != null) return false;
   const code = readErrorCode(error);
-  if (code === "42703" || code === "PGRST204") return true;
-  const text = schemaErrorText(error);
-  return text.includes("42703") || text.includes("PGRST204");
+  return code === "42703" || code === "PGRST204";
 }
 
 function readErrorCode(error: unknown): string | null {
   if (typeof error !== "object" || error === null || !("code" in error)) return null;
-  return typeof error.code === "string" ? error.code : null;
+  const code: unknown = Reflect.get(error, "code");
+  return typeof code === "string" ? code : null;
 }
 
 function owns(payload: Record<string, unknown>, column: string): boolean {
@@ -381,15 +368,4 @@ function finiteNumber(value: unknown): number | null {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function schemaErrorText(error: unknown): string {
-  if (typeof error === "string") return error;
-  if (error instanceof Error) return error.message;
-  if (typeof error !== "object" || error === null) return "";
-  const parts: string[] = [];
-  if ("message" in error && typeof error.message === "string") parts.push(error.message);
-  if ("details" in error && typeof error.details === "string") parts.push(error.details);
-  if ("hint" in error && typeof error.hint === "string") parts.push(error.hint);
-  return parts.join(" ");
 }
