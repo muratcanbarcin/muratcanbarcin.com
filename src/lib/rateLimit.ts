@@ -13,16 +13,26 @@ interface SlidingWindowOptions {
 /**
  * In-memory sliding window. Each key keeps only the timestamps that still fall inside the window,
  * so a burst cannot borrow quota from requests that have already expired.
+ * The map is capped so a flood of distinct keys cannot grow without bound.
  */
 export function createSlidingWindowLimiter({ limit, windowMs }: SlidingWindowOptions) {
   const buckets = new Map<string, number[]>();
+  const maxBuckets = 10_000;
+
+  const store = (key: string, timestamps: number[]) => {
+    if (!buckets.has(key) && buckets.size >= maxBuckets) {
+      const oldest = buckets.keys().next().value;
+      if (oldest !== undefined) buckets.delete(oldest);
+    }
+    buckets.set(key, timestamps);
+  };
 
   return {
     consume(key: string, now = Date.now()): RateLimitDecision {
       const fresh = (buckets.get(key) ?? []).filter((timestamp) => now - timestamp < windowMs);
 
       if (fresh.length >= limit) {
-        buckets.set(key, fresh);
+        store(key, fresh);
         const oldest = fresh[0] ?? now;
         const retryAfterMs = windowMs - (now - oldest);
         return {
@@ -34,7 +44,7 @@ export function createSlidingWindowLimiter({ limit, windowMs }: SlidingWindowOpt
       }
 
       fresh.push(now);
-      buckets.set(key, fresh);
+      store(key, fresh);
       return {
         allowed: true,
         limit,
@@ -57,12 +67,20 @@ export const contactInquiryRateLimiter = createSlidingWindowLimiter({ limit: 3, 
 /** Makas App Store support tickets: 5 submissions per 10 minutes per address. */
 export const makasSupportRateLimiter = createSlidingWindowLimiter({ limit: 5, windowMs: 600_000 });
 
-/** First forwarded address wins; falls back to the direct peer header, then a shared unknown bucket. */
-export function readClientAddress(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  const forwardedAddress = forwarded?.split(",")[0]?.trim();
-  if (forwardedAddress) return forwardedAddress;
+const ADDRESS_LIMIT = 128;
 
-  const realAddress = request.headers.get("x-real-ip")?.trim();
-  return realAddress || "unknown";
+/** Platform client IP first. The left-most `x-forwarded-for` hop is client-supplied and spoofable. */
+export function readClientAddress(request: Request): string {
+  return (
+    readHop(request.headers.get("x-vercel-forwarded-for")) ??
+    readHop(request.headers.get("x-real-ip")) ??
+    readHop(request.headers.get("x-forwarded-for")) ??
+    "unknown"
+  );
+}
+
+function readHop(header: string | null): string | null {
+  const hop = header?.split(",")[0]?.trim() ?? "";
+  if (!hop || hop.length > ADDRESS_LIMIT) return null;
+  return hop;
 }

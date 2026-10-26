@@ -1,3 +1,4 @@
+import "server-only";
 import { TIER2_GUARD_AT } from "@/lib/aiModels";
 import { readTier2Usage, writeTier2Usage, type Tier2UsageRow } from "@/lib/supabase";
 

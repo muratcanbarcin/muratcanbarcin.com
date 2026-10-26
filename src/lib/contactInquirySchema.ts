@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ContactInquiryField, ContactInquiryPayload } from "@/types";
+import { boundedEmail, boundedText } from "@/lib/userText";
 
 export const CONTACT_INQUIRY_LIMITS = {
   name: 120,
@@ -8,9 +9,9 @@ export const CONTACT_INQUIRY_LIMITS = {
 } as const satisfies Record<ContactInquiryField, number>;
 
 export const contactInquirySchema = z.object({
-  name: z.string().trim().min(1).max(CONTACT_INQUIRY_LIMITS.name),
-  email: z.string().trim().max(CONTACT_INQUIRY_LIMITS.email).pipe(z.email()),
-  message: z.string().trim().min(1).max(CONTACT_INQUIRY_LIMITS.message),
+  name: boundedText(CONTACT_INQUIRY_LIMITS.name, 1),
+  email: boundedEmail(CONTACT_INQUIRY_LIMITS.email),
+  message: boundedText(CONTACT_INQUIRY_LIMITS.message, 1),
 }) satisfies z.ZodType<ContactInquiryPayload>;
 
 const isContactInquiryField = (key: PropertyKey): key is ContactInquiryField =>

@@ -1,3 +1,4 @@
+import "server-only";
 import { portfolioData } from "@/data/portfolioData";
 import type { MediaAsset, Project } from "@/types";
 

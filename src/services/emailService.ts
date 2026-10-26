@@ -1,7 +1,9 @@
+import "server-only";
 import { Resend } from "resend";
 import type { ContactInquiryPayload, MakasSupportPayload, ResumeRequestPayload } from "@/types";
 import { contact } from "@/data/contact";
 import { logError } from "@/lib/logger";
+import { emailHeader, stripUnsafeText } from "@/lib/userText";
 
 const DEFAULT_SENDER = "MCB Portfolio <onboarding@resend.dev>";
 const MAKAS_FALLBACK_SENDER = "Makas Support <onboarding@resend.dev>";
@@ -79,8 +81,8 @@ async function deliver(message: NotificationMessage): Promise<EmailDelivery> {
   const { data, error } = await client.emails.send({
     from: process.env.RESEND_FROM_EMAIL?.trim() || DEFAULT_SENDER,
     to: contact.email,
-    replyTo: message.replyTo,
-    subject: message.subject,
+    replyTo: emailHeader(message.replyTo),
+    subject: emailHeader(message.subject),
     text: message.text,
     tags: [{ name: "category", value: message.tag }],
   });
@@ -97,7 +99,7 @@ async function deliver(message: NotificationMessage): Promise<EmailDelivery> {
  */
 export async function sendMakasSupportNotification(payload: MakasSupportPayload): Promise<EmailDelivery> {
   const receivedAt = new Date().toISOString();
-  const subject = `[Makas Support Ticket] - ${singleLine(payload.subject)} from ${singleLine(payload.name)}`;
+  const subject = emailHeader(`[Makas Support Ticket] - ${singleLine(payload.subject)} from ${singleLine(payload.name)}`);
   const text = [
     `Name:\n${payload.name}`,
     `Email:\n${payload.email}`,
@@ -130,7 +132,7 @@ export async function sendMakasSupportNotification(payload: MakasSupportPayload)
     const { data, error } = await client.emails.send({
       from: makasSender(),
       to: MAKAS_INBOX,
-      replyTo: payload.email,
+      replyTo: emailHeader(payload.email),
       subject,
       text,
       html: makasSupportHtml(payload, receivedAt),
@@ -192,7 +194,7 @@ function makasSupportHtml(payload: MakasSupportPayload, receivedAt: string): str
 }
 
 function escapeHtml(value: string): string {
-  return value
+  return stripUnsafeText(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -201,7 +203,7 @@ function escapeHtml(value: string): string {
 }
 
 function singleLine(value: string): string {
-  return value.replace(/\s+/g, " ").trim().slice(0, 120);
+  return emailHeader(value).slice(0, 120);
 }
 
 function formatFields(fields: ReadonlyArray<readonly [label: string, value: string]>): string {

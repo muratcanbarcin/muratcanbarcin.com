@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { MakasSupportField, MakasSupportPayload } from "@/types";
 import { MAKAS_SUPPORT_SUBJECTS } from "@/types/makasSupport";
+import { boundedEmail, boundedText, sanitizeUserText } from "@/lib/userText";
 
 export const MAKAS_SUPPORT_LIMITS = {
   name: 120,
@@ -11,15 +12,18 @@ export const MAKAS_SUPPORT_LIMITS = {
 } as const;
 
 const optionalText = (max: number) =>
-  z.preprocess((value) => (typeof value === "string" ? value : ""), z.string().trim().max(max));
+  z.preprocess(
+    (value) => (typeof value === "string" ? sanitizeUserText(value) : ""),
+    z.string().max(max),
+  );
 
 export const makasSupportSchema = z.object({
-  name: z.string().trim().min(1).max(MAKAS_SUPPORT_LIMITS.name),
-  email: z.string().trim().max(MAKAS_SUPPORT_LIMITS.email).pipe(z.email()),
+  name: boundedText(MAKAS_SUPPORT_LIMITS.name, 1),
+  email: boundedEmail(MAKAS_SUPPORT_LIMITS.email),
   phone: optionalText(MAKAS_SUPPORT_LIMITS.phone),
   shopName: optionalText(MAKAS_SUPPORT_LIMITS.shopName),
   subject: z.enum(MAKAS_SUPPORT_SUBJECTS),
-  message: z.string().trim().min(1).max(MAKAS_SUPPORT_LIMITS.message),
+  message: boundedText(MAKAS_SUPPORT_LIMITS.message, 1),
 }) satisfies z.ZodType<MakasSupportPayload>;
 
 const isMakasSupportField = (key: PropertyKey): key is MakasSupportField =>

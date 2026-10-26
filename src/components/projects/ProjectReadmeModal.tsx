@@ -44,7 +44,17 @@ function isBadgeImage(src: string): boolean {
   try {
     return new URL(src).hostname === "img.shields.io";
   } catch {
-    return src.includes("img.shields.io");
+    return false;
+  }
+}
+
+function isSafeImageSrc(src: string): boolean {
+  if (src.startsWith("/") && !src.startsWith("//")) return true;
+  try {
+    const protocol = new URL(src).protocol;
+    return protocol === "https:" || protocol === "http:";
+  } catch {
+    return false;
   }
 }
 
@@ -62,7 +72,7 @@ function markdownComponents(githubUrl: string, branch: string): Components {
       </a>
     ),
     img: ({ src, alt }) => {
-      if (typeof src !== "string") return null;
+      if (typeof src !== "string" || !isSafeImageSrc(src)) return null;
       const badge = isBadgeImage(src);
       const tallBadge = badge && src.includes("for-the-badge");
       return (

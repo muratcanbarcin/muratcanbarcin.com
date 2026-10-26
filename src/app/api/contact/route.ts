@@ -1,6 +1,7 @@
 import { collectInvalidContactFields, contactInquirySchema } from "@/lib/contactInquirySchema";
 import { logError } from "@/lib/logger";
 import { contactInquiryRateLimiter, readClientAddress } from "@/lib/rateLimit";
+import { BODY_LIMITS, readSameOriginJson } from "@/lib/requestGuard";
 import { sendContactNotification } from "@/services/emailService";
 
 const CONTACT_ROUTE = "/api/contact";
@@ -16,12 +17,14 @@ export async function POST(request: Request) {
     );
   }
 
-  let payload: unknown;
-  try {
-    payload = await request.json();
-  } catch {
-    return Response.json({ error: "invalid_request", fields: [] }, { status: 400, headers: NO_STORE });
+  const incoming = await readSameOriginJson(request, BODY_LIMITS.form);
+  if (!incoming.ok) {
+    return Response.json(
+      { error: incoming.status === 403 ? "forbidden" : "invalid_request", fields: [] },
+      { status: incoming.status, headers: NO_STORE },
+    );
   }
+  const payload = incoming.value;
 
   const parsed = contactInquirySchema.safeParse(payload);
   if (!parsed.success) {

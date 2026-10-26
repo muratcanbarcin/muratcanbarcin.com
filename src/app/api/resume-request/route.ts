@@ -1,11 +1,12 @@
 import { logError, logWarn } from "@/lib/logger";
 import { readClientAddress, resumeRequestRateLimiter } from "@/lib/rateLimit";
-
-const RESUME_ROUTE = "/api/resume-request";
+import { BODY_LIMITS, readSameOriginJson } from "@/lib/requestGuard";
 import { collectInvalidFields, resumeRequestSchema } from "@/lib/resumeRequestSchema";
 import { sendResumeRequestNotification } from "@/services/emailService";
 import { recordResumeRequest } from "@/services/resumeRequestInbox";
 import { formatResumeAlert, sendTelegramAlert } from "@/services/telegramService";
+
+const RESUME_ROUTE = "/api/resume-request";
 
 const NO_STORE = { "Cache-Control": "no-store" } as const;
 
@@ -22,13 +23,15 @@ export async function POST(request: Request) {
     );
   }
 
-  let payload: unknown;
-  try {
-    payload = await request.json();
-  } catch {
-    logWarn("Resume request body was not valid JSON", { route: RESUME_ROUTE, metadata: { status: 400 } });
-    return Response.json({ error: "invalid_request", fields: [] }, { status: 400, headers: NO_STORE });
+  const incoming = await readSameOriginJson(request, BODY_LIMITS.form);
+  if (!incoming.ok) {
+    logWarn("Resume request body was rejected", { route: RESUME_ROUTE, metadata: { status: incoming.status } });
+    return Response.json(
+      { error: incoming.status === 403 ? "forbidden" : "invalid_request", fields: [] },
+      { status: incoming.status, headers: NO_STORE },
+    );
   }
+  const payload = incoming.value;
 
   const parsed = resumeRequestSchema.safeParse(payload);
   if (!parsed.success) {

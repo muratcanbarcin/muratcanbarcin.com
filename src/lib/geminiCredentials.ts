@@ -1,3 +1,5 @@
+import "server-only";
+
 const GOOGLE_GENERATIVE_AI_API_KEY = "GOOGLE_GENERATIVE_AI_API_KEY";
 const GEMINI_API_KEY = "GEMINI_API_KEY";
 

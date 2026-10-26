@@ -1,3 +1,4 @@
+import "server-only";
 import { APICallError, streamText, type ModelMessage } from "ai";
 import { createGoogleGenerativeAI, type GoogleLanguageModelOptions } from "@ai-sdk/google";
 import { resolveGeminiApiKey } from "@/lib/geminiCredentials";

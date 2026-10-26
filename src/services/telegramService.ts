@@ -1,4 +1,6 @@
+import "server-only";
 import { runAfterResponse } from "@/lib/background";
+import { stripUnsafeText } from "@/lib/userText";
 
 const TELEGRAM_TEXT_LIMIT = 4_000;
 let missingCredentialsWarned = false;
@@ -137,5 +139,5 @@ function renderInteraction(
 }
 
 function escapeTelegramHtml(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return stripUnsafeText(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

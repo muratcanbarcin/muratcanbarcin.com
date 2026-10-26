@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ResumeRequestField, ResumeRequestPayload } from "@/types";
+import { boundedEmail, boundedText } from "@/lib/userText";
 
 export const RESUME_REQUEST_LIMITS = {
   email: 254,
@@ -9,9 +10,9 @@ export const RESUME_REQUEST_LIMITS = {
 
 /** Shared by the modal and `/api/resume-request` so both sides reject exactly the same input. */
 export const resumeRequestSchema = z.object({
-  email: z.string().trim().max(RESUME_REQUEST_LIMITS.email).pipe(z.email()),
-  company: z.string().trim().min(1).max(RESUME_REQUEST_LIMITS.company),
-  message: z.string().trim().max(RESUME_REQUEST_LIMITS.message).default(""),
+  email: boundedEmail(RESUME_REQUEST_LIMITS.email),
+  company: boundedText(RESUME_REQUEST_LIMITS.company, 1),
+  message: boundedText(RESUME_REQUEST_LIMITS.message).default(""),
 }) satisfies z.ZodType<ResumeRequestPayload, Partial<ResumeRequestPayload>>;
 
 const isResumeRequestField = (key: PropertyKey): key is ResumeRequestField =>

@@ -1,26 +1,28 @@
 import { connection, NextResponse } from "next/server";
+import { canWriteDiagnostics } from "@/lib/diagnosticAccess";
+import { isCrossSiteBrowserRequest } from "@/lib/requestGuard";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
+const NO_STORE = { "Cache-Control": "no-store" } as const;
+
 /**
- * Writes one `system_logs` row and returns the Supabase result.
- * `connection()` keeps the insert on a real request: this app uses Cache Components,
- * which removes `export const dynamic` and would otherwise prerender the GET.
+ * Production is a read-only liveness check: no insert and no environment detail.
+ * Local `next dev` can still write one `system_logs` row. Every other deployment
+ * needs `DIAGNOSTIC_SECRET` in the `x-diagnostic-token` header.
+ * `connection()` keeps the handler on a real request under Cache Components.
  */
-export async function GET() {
+export async function GET(request: Request) {
   await connection();
+
+  if (!canWriteDiagnostics(request) || isCrossSiteBrowserRequest(request)) {
+    return NextResponse.json({ ok: true, mode: "health" }, { headers: NO_STORE });
+  }
 
   const supabaseAdmin = getSupabaseAdmin();
   if (!supabaseAdmin) {
     return NextResponse.json(
-      {
-        success: false,
-        error: "Supabase client is null. Check environment variables.",
-        env: {
-          has_url: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
-          has_service_key: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
-        },
-      },
-      { status: 500, headers: { "Cache-Control": "no-store" } },
+      { success: false, error: "Supabase client is null. Check environment variables." },
+      { status: 500, headers: NO_STORE },
     );
   }
 
@@ -35,14 +37,8 @@ export async function GET() {
     .select();
 
   if (error) {
-    return NextResponse.json(
-      { success: false, supabase_error: error },
-      { status: 500, headers: { "Cache-Control": "no-store" } },
-    );
+    return NextResponse.json({ success: false, supabase_error: error }, { status: 500, headers: NO_STORE });
   }
 
-  return NextResponse.json(
-    { success: true, message: "Log inserted successfully", row: data },
-    { headers: { "Cache-Control": "no-store" } },
-  );
+  return NextResponse.json({ success: true, message: "Log inserted successfully", row: data }, { headers: NO_STORE });
 }

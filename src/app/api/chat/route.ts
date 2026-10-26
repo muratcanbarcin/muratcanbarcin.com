@@ -6,6 +6,8 @@ import { resolveGeminiApiKey } from "@/lib/geminiCredentials";
 import { inferLocale, isLocale } from "@/lib/i18n";
 import { logError, logWarn } from "@/lib/logger";
 import { chatRateLimiter, readClientAddress } from "@/lib/rateLimit";
+import { BODY_LIMITS, readSameOriginJson } from "@/lib/requestGuard";
+import { boundedText } from "@/lib/userText";
 import { createTokenStream, isTier2ModelError, streamPortfolioChat } from "@/services/aiService";
 
 const CHAT_ROUTE = "/api/chat";
@@ -27,7 +29,7 @@ const chatRequestSchema = z
       .array(
         z.object({
           role: z.enum(["user", "assistant"]),
-          content: z.string().trim().min(1).max(4_000),
+          content: boundedText(4_000, 1),
         }),
       )
       .min(1)
@@ -60,13 +62,15 @@ export async function POST(request: Request) {
     );
   }
 
-  let payload: unknown;
-  try {
-    payload = await request.json();
-  } catch {
-    logWarn("Chat request body was not valid JSON", { route: CHAT_ROUTE, metadata: { status: 400 } });
-    return Response.json({ error: "invalid_request" }, { status: 400, headers: { "Cache-Control": "no-store" } });
+  const incoming = await readSameOriginJson(request, BODY_LIMITS.chat);
+  if (!incoming.ok) {
+    logWarn("Chat request body was rejected", { route: CHAT_ROUTE, metadata: { status: incoming.status } });
+    return Response.json(
+      { error: incoming.status === 403 ? "forbidden" : "invalid_request" },
+      { status: incoming.status, headers: { "Cache-Control": "no-store" } },
+    );
   }
+  const payload = incoming.value;
 
   const parsed = chatRequestSchema.safeParse(payload);
   if (!parsed.success) {
