@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { JsonLd } from "@/components/common/JsonLd";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { LocaleProvider } from "@/contexts/LocaleContext";
@@ -81,6 +82,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <LocaleProvider>{children}</LocaleProvider>
         </ThemeProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
