@@ -68,13 +68,21 @@ function toScholarlyArticle(publication: Publication): JsonLdNode {
   };
 }
 
+/** Public profile URLs only. Email is contact, not an entity `sameAs`. Missing networks are omitted. */
+function publicSameAs(): string[] {
+  return profile.socials.flatMap((social) =>
+    social.platform === "email" || !social.url.startsWith("https://") ? [] : [social.url],
+  );
+}
+
 function buildPerson(): JsonLdNode {
   return {
     "@type": "Person",
     "@id": PERSON_ID,
     name: profile.name,
-    jobTitle: profile.headline.en,
-    description: profile.valueProposition.en,
+    alternateName: [...siteConfig.alternateNames],
+    jobTitle: siteConfig.jobTitle,
+    description: siteConfig.description,
     url: siteConfig.url,
     homeLocation: { "@type": "Place", name: profile.location },
     alumniOf: education.map(({ institution }) => ({
@@ -85,9 +93,7 @@ function buildPerson(): JsonLdNode {
       .filter((experience) => EMPLOYMENT_TYPES.has(experience.type))
       .map(toEmployeeRole),
     knowsAbout: siteConfig.knowsAbout,
-    sameAs: profile.socials
-      .filter((social) => social.platform !== "email")
-      .map((social) => social.url),
+    sameAs: publicSameAs(),
   };
 }
 
@@ -112,7 +118,7 @@ function buildProfilePage(): JsonLdNode {
     description: siteConfig.description,
     inLanguage: ["en", "tr"],
     isPartOf: { "@id": WEBSITE_ID, "@type": "WebSite" },
-    mainEntity: { "@id": PERSON_ID, "@type": "Person" },
+    mainEntity: buildPerson(),
     about: { "@id": PERSON_ID, "@type": "Person" },
   };
 }
@@ -121,12 +127,7 @@ function buildProfilePage(): JsonLdNode {
 export function buildStructuredData(): JsonLdGraph {
   return {
     "@context": "https://schema.org",
-    "@graph": [
-      buildProfilePage(),
-      buildPerson(),
-      ...publications.map(toScholarlyArticle),
-      buildWebSite(),
-    ],
+    "@graph": [buildProfilePage(), ...publications.map(toScholarlyArticle), buildWebSite()],
   };
 }
 

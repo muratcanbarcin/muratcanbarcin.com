@@ -31,22 +31,52 @@ export const metadata: Metadata = {
   keywords: siteConfig.keywords,
   authors: [{ name: siteConfig.name, url: siteConfig.url }],
   creator: siteConfig.name,
-  alternates: { canonical: "/" },
+  alternates: { canonical: siteConfig.url },
   openGraph: {
-    type: "website",
+    type: "profile",
+    firstName: siteConfig.givenName,
+    lastName: siteConfig.familyName,
+    username: siteConfig.username,
     locale: siteConfig.locale,
     alternateLocale: siteConfig.alternateLocales,
     url: siteConfig.url,
     title: siteConfig.title,
     description: siteConfig.social.openGraphDescription,
     siteName: siteConfig.name,
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: siteConfig.social.imageAlt,
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: siteConfig.title,
     description: siteConfig.social.twitterDescription,
+    images: [
+      {
+        url: "/twitter-image",
+        width: 1200,
+        height: 630,
+        alt: siteConfig.social.imageAlt,
+      },
+    ],
   },
-  robots: { index: true, follow: true },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export const viewport: Viewport = {

@@ -2,7 +2,9 @@ export interface SiteSocialCopy {
   openGraphDescription: string;
   twitterDescription: string;
   imageAlt: string;
-  /** Rendered as the `[ a • b • c ]` terminal tag on generated social cards. */
+  /** Role line drawn on the generated social card. */
+  imageRole: string;
+  /** Highlight chips drawn on the generated social card. */
   imageTagline: string[];
 }
 
@@ -13,6 +15,12 @@ export interface SiteConfig {
   websiteName: string;
   title: string;
   titleTemplate: string;
+  /** Schema.org `jobTitle`. Kept separate from the on-page headline. */
+  jobTitle: string;
+  givenName: string;
+  familyName: string;
+  username: string;
+  alternateNames: readonly string[];
   description: string;
   social: SiteSocialCopy;
   /** Open Graph locale, e.g. `en_US`. */
