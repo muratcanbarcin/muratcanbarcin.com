@@ -13,9 +13,19 @@ export type BodyReadResult =
 
 /**
  * Browsers set `Sec-Fetch-Site` and scripts cannot override it.
- * A missing header is a non-browser client. `none` is a user-initiated navigation.
+ * A missing header can be a non-browser client. An explicit Origin must still match.
+ * `none` is a user-initiated navigation.
  */
 export function isCrossSiteBrowserRequest(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (origin !== null) {
+    try {
+      // Reject opaque, malformed and noncanonical origins as well as foreign origins.
+      if (origin !== new URL(request.url).origin) return true;
+    } catch {
+      return true;
+    }
+  }
   const site = request.headers.get("sec-fetch-site");
   if (site === null || site === "same-origin" || site === "none") return false;
   return true;

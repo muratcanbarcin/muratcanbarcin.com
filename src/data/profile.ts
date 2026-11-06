@@ -3,13 +3,13 @@ import type { Profile, SkillGroup } from "@/types";
 export const profile: Profile = {
   name: "Murat Can Barçin",
   headline: {
-    en: "Software Engineer (Backend & AI)",
-    tr: "Yazılım Mühendisi (Backend & AI)",
+    en: "Software Engineer | Backend & Applied AI",
+    tr: "Yazılım Mühendisi | Backend & Yapay Zeka",
   },
-  location: "Gaziantep, Türkiye",
+  location: "İstanbul, Türkiye",
   summary: {
-    en: "Honor Computer Engineering graduate dedicated to architecting scalable backend systems, applied AI solutions, and IoT integrations. Brings corporate engineering experience from leading companies such as Turkcell and Sun Group, complemented by technical instructor experience at techcareer.net and a robust portfolio of diverse projects. Aims to blend technical expertise with strong interpersonal and leadership skills to develop high-quality, scalable products that create tangible real-world value.",
-    tr: "Ölçeklenebilir backend mimarileri, yapay zeka çözümleri ve IoT entegrasyonları geliştirmeye odaklanan onur dereceli Bilgisayar Mühendisliği mezunu. Turkcell ve Sun Group gibi şirketlerde edindiği kurumsal geliştirme deneyimini; techcareer.net bünyesindeki teknik eğitmenlik tecrübesi ve başarıyla hayata geçirdiği projelerle zenginleştirmektedir. Teknik uzmanlığını güçlü sosyal ve liderlik becerileriyle harmanlayarak; gerçek dünyada somut değer yaratan, yüksek kaliteli ve ölçeklenebilir ürünler geliştirmeyi hedeflemektedir.",
+    en: "Computer Engineering graduate with honors, focused on backend development and applied artificial intelligence. Brings hands-on software engineering experience at Turkcell and Sun Group, complemented by technical instructor experience at techcareer.net and a diverse portfolio of projects. Aims to build reliable, scalable software solutions. Based in İstanbul and open to relocation.",
+    tr: "Backend geliştirme ve uygulamalı yapay zeka alanlarına odaklanan, onur derecesiyle mezun Bilgisayar Mühendisi. Turkcell ve Sun Group'ta edindiği uygulamalı yazılım mühendisliği deneyimini, techcareer.net bünyesindeki teknik eğitmenlik tecrübesi ve çeşitli projelerden oluşan portföyüyle desteklemektedir. Güvenilir ve ölçeklenebilir yazılım çözümleri geliştirmeyi hedeflemektedir. İstanbul'da yaşıyor ve taşınmaya açık.",
   },
   valueProposition: {
     en: "Architecting scalable backend systems, resilient microservices, and applied AI solutions.",
@@ -44,6 +44,8 @@ export const skills: readonly SkillGroup[] = [
     skills: [
       "Java",
       "Spring Boot",
+      "Spring Security",
+      "Spring Data JPA (Hibernate)",
       "Python",
       "FastAPI",
       "RESTful API Design",
@@ -61,12 +63,14 @@ export const skills: readonly SkillGroup[] = [
     },
     icon: "cpu",
     skills: [
-      "LLM Integration & Training",
+      "Machine Learning (Training & Evaluation)",
+      "LLM Integration",
+      "LLM Fine-Tuning",
+      "Retrieval-Augmented Generation (RAG)",
       "Computer Vision (OpenCV)",
       "Edge Computing",
       "Raspberry Pi",
       "Data Fusion",
-      "MATLAB",
     ],
   },
   {
@@ -77,7 +81,7 @@ export const skills: readonly SkillGroup[] = [
       tr: "İlişkisel modelleme, kalıcılık ve veri erişim katmanları.",
     },
     icon: "database",
-    skills: ["SQL", "MySQL", "PostgreSQL", "Hibernate/JPA", "Relational Database Design"],
+    skills: ["SQL", "MySQL", "PostgreSQL", "PostGIS", "Redis", "Relational Database Design"],
   },
   {
     id: "software-architecture",
@@ -92,6 +96,7 @@ export const skills: readonly SkillGroup[] = [
       "Design Patterns",
       "Object-Oriented Programming (OOP)",
       "Data Structures & Algorithms",
+      "Git",
     ],
   },
 ];

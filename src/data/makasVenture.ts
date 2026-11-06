@@ -15,15 +15,15 @@ export const makasVenture = {
     tr: "Kurucu Ortak ve Sistem Mimarı",
   },
   summary: {
-    en: "Salon owners run scheduling, staff, and analytics in the mobile app. Clients book through WhatsApp, with no download.",
-    tr: "Salon sahipleri program, personel ve analitiği mobil uygulamadan yönetir. Müşteriler WhatsApp’tan randevu alır, uygulama indirmez.",
+    en: "Co-founded a multi-tenant SaaS for salon scheduling, staff, bookings, and analytics. Owners use the mobile app; clients book through WhatsApp without a download. FastAPI is the scheduling source of truth, with Redis slot holds and database row locks for staff assignment.",
+    tr: "Salon takvimi, personel, randevu ve analitik yönetimi için çok kiracılı SaaS platformunun kurucu ortağı. Sahipler mobil uygulamayı kullanır; müşteriler uygulama indirmeden WhatsApp’tan randevu alır. FastAPI çizelgenin doğruluk kaynağıdır; Redis slot kilitleri ve veritabanı satır kilitleri personel atamasını destekler.",
   },
   channels: [
     { en: "App Store, very soon", tr: "App Store’da çok yakında" },
     { en: "Play Store, very soon", tr: "Play Store’da çok yakında" },
     { en: "WhatsApp, very soon", tr: "WhatsApp’ta çok yakında" },
   ],
-  stack: ["FastAPI", "Redis", "PostgreSQL", "Node.js", "Meta Graph API", "Expo"],
+  stack: ["Python", "FastAPI", "SQLAlchemy", "Redis", "PostgreSQL", "Node.js", "Express", "Meta WhatsApp Cloud API", "Expo", "React Native"],
   architecture: [
     {
       step: 1,
@@ -47,8 +47,8 @@ export const makasVenture = {
       step: 3,
       title: "Core",
       description: {
-        en: "A 120-second slot lock, then scheduling and tenant checks",
-        tr: "120 saniyelik slot kilidi, ardından çizelge ve kiracı kontrolü",
+        en: "120-second Redis hold, row-locked staff assignment and application-level tenant checks",
+        tr: "120 saniyelik Redis kilidi, satır kilitli personel ataması ve uygulama katmanında kiracı kontrolü",
       },
       technology: "Redis · FastAPI",
     },

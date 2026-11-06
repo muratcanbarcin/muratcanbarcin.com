@@ -1,0 +1,46 @@
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # UTC; days 1, 5, …, 29. Month boundaries never create a gap over four days.
+    - cron: '17 12 */4 * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      # No checkout, third-party actions, dependency install, app imports or writes.
+      - name: Read one database identifier
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          try {
+            const key = process.env.SUPABASE_KEY?.trim();
+            const url = new URL(process.env.SUPABASE_URL?.trim() || '');
+            if (!key || url.protocol !== 'https:' ||
+                !/^[a-z0-9-]+\.supabase\.co$/.test(url.hostname) ||
+                url.username || url.password || url.port) process.exit(0);
+
+            const endpoint = new URL('/rest/v1/system_logs?select=id&limit=1', url.origin);
+            const response = await fetch(endpoint, {
+              method: 'GET',
+              headers: { apikey: key, Authorization: `Bearer ${key}` },
+              redirect: 'error',
+              signal: AbortSignal.timeout(10_000),
+            });
+            await response.body?.cancel();
+          } catch {
+            // Best effort: no output, application log rows, alerts or failure notifications.
+          }
+          JS

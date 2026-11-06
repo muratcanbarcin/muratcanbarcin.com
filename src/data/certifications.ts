@@ -35,15 +35,6 @@ export const certifications: readonly Certification[] = [
     award: { en: "Alumni", tr: "Mezun" },
   },
   {
-    id: "ecothon-2024",
-    title: "Ecothon: Design The Sustainability Future",
-    issuer: "Google Developer Student Clubs - DEU",
-    issueDate: "2024-05",
-    category: "hackathon",
-    credentialUrl: "https://ecothonizmir.com",
-    award: { en: "Organizer", tr: "Organizatör" },
-  },
-  {
     id: "t3-entrepreneurship-2024",
     title: "Entrepreneur Training Program",
     issuer: "T3 Startup Center",
@@ -73,12 +64,5 @@ export const certifications: readonly Certification[] = [
     issueDate: "2020-01",
     category: "training",
     award: { en: "Participant", tr: "Katılımcı" },
-  },
-  {
-    id: "postmodern-leadership-2019",
-    title: "Postmodern Leadership",
-    issuer: "Mertsoz Consultancy",
-    issueDate: "2019-12",
-    category: "training",
   },
 ];

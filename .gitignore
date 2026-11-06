@@ -25,6 +25,7 @@
 *.pem
 
 # debug
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -39,6 +40,20 @@ yarn-error.log*
 .cursorrules
 cv/
 cv/**
+.agents/
+.codex/
+
+# local working files and generated reports
+/state/
+/tmp/
+/temp/
+/docs/security-audit.md
+.cache/
+.eslintcache
+*.tmp
+*.swp
+*.swo
+*~
 
 # private raw documents (public copies belong in public/assets/documents/)
 /*.pdf

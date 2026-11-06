@@ -1,99 +1,114 @@
 import type { Project } from "@/types";
 
-/**
- * `media` and `links` stay empty until real assets exist, so the UI never renders broken
- * links. Drop files into `public/assets/projects/<slug>/` and reference them via `projectAsset()`.
- */
+/** Public repository bindings are explicitly allowlisted; private projects use local context. */
 export const projects: readonly Project[] = [
   {
     id: "c4isr-prototype",
     slug: "c4isr-prototype",
-    title: "AI-Supported Lightweight C4ISR Prototype",
+    title: "SINAPS — AI-Supported Lightweight C4ISR Prototype",
     subtitle: {
-      en: "TEKNOFEST Finalist · Senior Capstone Project",
-      tr: "TEKNOFEST Finalisti · Bitirme Projesi",
+      en: "TEKNOFEST 2026 · 5th Place · Senior Capstone",
+      tr: "TEKNOFEST 2026 · 5’incilik · Bitirme Projesi"
     },
     topics: [
-      { en: "C4ISR", tr: "C4ISR" },
-      { en: "Edge AI", tr: "Uçta Yapay Zeka" },
-      { en: "Data Fusion", tr: "Veri Füzyonu" },
+      {
+        en: "C4ISR",
+        tr: "C4ISR"
+      },
+      {
+        en: "Edge AI",
+        tr: "Uçta Yapay Zeka"
+      },
+      {
+        en: "Data Fusion",
+        tr: "Veri Füzyonu"
+      }
     ],
     summary: {
-      en: "A polyglot microservices C4ISR prototype that fuses multi-source sensor data at the edge for real-time situational awareness and threat detection.",
-      tr: "Gerçek zamanlı durumsal farkındalık ve tehdit algılama için çok kaynaklı sensör verilerini uçta birleştiren polyglot mikroservis tabanlı bir C4ISR prototipi.",
+      en: "Combines live sensor and simulated telemetry with AI-assisted tactical decision support on a geospatial command dashboard.",
+      tr: "Canlı sensör ve simülasyon telemetrisini, coğrafi komuta panelinde AI destekli taktik karar desteğiyle birleştirir."
     },
     description: {
-      en: "Architected a polyglot microservices system for a lightweight C4ISR prototype, using Java and Python services to ensure modularity, scalability, and robust system design. Implemented multi-source data fusion algorithms on Raspberry Pi 5 with AI Cameras, enabling real-time Edge AI processing for immediate situational awareness and threat detection. Developed a decision support interface that visualizes fused sensor data on tactical maps, managing the development lifecycle via Agile methodologies and Jira.",
-      tr: "Modülerlik, ölçeklenebilirlik ve güçlü bir sistem tasarımı sağlamak amacıyla Java ve Python servislerini kullanan, hafif bir C4ISR (askeri karar destek sistemi) prototipi için polyglot bir mikroservis sistemi tasarlandı. Anlık durumsal farkındalık ve tehdit algılama sağlamak amacıyla, Raspberry Pi 5 ve Yapay Zeka kameraları üzerinde gerçek zamanlı Edge AI işlemeyi mümkün kılan çok kaynaklı veri füzyonu algoritmaları uygulandı. Geliştirme yaşam döngüsü Agile metodolojiler ve Jira ile yönetilerek, füzyonlanmış sensör verilerini taktik haritalar üzerinde görselleştiren bir karar destek arayüzü geliştirildi.",
+      en: "Designed modular Java/Spring Boot and Python microservices for real-time telemetry and AI-assisted tactical decision support. MQTT carries drone and simulator events; HTTP ingests wearable biometrics and location. PostgreSQL/PostGIS stores geospatial assets, while a FastAPI AI service and React/Leaflet dashboard support analysis and tactical maps. Physical and simulated tracks remain distinguishable. The team placed fifth at TEKNOFEST 2026.",
+      tr: "Gerçek zamanlı telemetri ve AI destekli taktik karar desteği için Java/Spring Boot ve Python mikroservislerinden oluşan modüler mimari tasarlandı. Drone ve simülasyon olayları MQTT, giyilebilir cihaz biyometrisi ve konum verileri HTTP ile alınır. PostgreSQL/PostGIS coğrafi varlıkları saklar; FastAPI AI servisi ve React/Leaflet paneli analiz ile taktik haritaları destekler. Fiziksel ve simüle izler ayrı tutulur. Ekip TEKNOFEST 2026’da beşinci oldu."
     },
     keyMetrics: [
-      { en: "Real-time edge AI", tr: "Gerçek zamanlı uçta yapay zeka" },
-      { en: "Multi-source data fusion", tr: "Çok kaynaklı veri füzyonu" },
+      {
+        en: "TEKNOFEST 2026 · 5th place",
+        tr: "TEKNOFEST 2026 · 5’incilik"
+      },
+      {
+        en: "Live + simulated telemetry fusion",
+        tr: "Canlı + simülasyon telemetrisi füzyonu"
+      }
     ],
     techStack: [
       "Java",
+      "Spring Boot",
       "Python",
-      "Microservices",
-      "Raspberry Pi 5",
-      "Computer Vision",
-      "Data Fusion",
-      "Jira",
+      "FastAPI",
+      "PostgreSQL/PostGIS",
+      "MQTT",
+      "React",
+      "TypeScript",
+      "Leaflet",
+      "Edge AI",
+      "Docker Compose"
     ],
     architectureFlow: [
       {
         step: 1,
-        title: "Edge Camera & Sensors",
+        title: "Sensor & Simulation Sources",
         description: {
-          en: "Field cameras and sensors on the edge node",
-          tr: "Uç düğümdeki saha kameraları ve sensörler",
+          en: "Drone telemetry, wearable biometrics and simulated tracks",
+          tr: "Drone telemetrisi, giyilebilir biyometri ve simüle izler"
         },
-        technology: "Raspberry Pi 5 · AI Camera",
-        inputOutput: "Scene → sensor frames",
+        technology: "Raspberry Pi · Python · MQTT / HTTP"
       },
       {
         step: 2,
-        title: "OpenCV Feature Extraction",
+        title: "Telemetry Ingestion",
         description: {
-          en: "Visual features extracted on the edge",
-          tr: "Görsel öznitelikler uçta çıkarılır",
+          en: "Normalize live and simulated events into a common asset model",
+          tr: "Canlı ve simüle olayları ortak varlık modeline dönüştürür"
         },
-        technology: "OpenCV · Python",
-        inputOutput: "Frames → features",
+        technology: "Java · Spring Boot · MQTT"
       },
       {
         step: 3,
-        title: "Sensor Fusion Engine",
+        title: "Geospatial Data & Analysis",
         description: {
-          en: "Multi-source features fused into one tactical picture",
-          tr: "Çok kaynaklı öznitelikler tek taktik tabloya birleşir",
+          en: "Persist geometry and request AI-assisted assessments",
+          tr: "Coğrafi veriyi saklar ve AI destekli değerlendirme ister"
         },
-        technology: "Python · Data Fusion",
-        inputOutput: "Features → fused tracks",
+        technology: "PostgreSQL/PostGIS · Python · FastAPI"
       },
       {
         step: 4,
-        title: "Tactical Station",
+        title: "Command Dashboard",
         description: {
-          en: "Fused tracks delivered to the operator station",
-          tr: "Füzyonlanmış izler operatör istasyonuna iletilir",
+          en: "Visualize tracks and decision support on tactical maps",
+          tr: "İzleri ve karar desteğini taktik haritalarda gösterir"
         },
-        technology: "FastAPI · ZeroMQ",
-        inputOutput: "Fused tracks → operator view",
-      },
+        technology: "React · TypeScript · Leaflet"
+      }
     ],
     media: [],
     links: [],
     status: "completed",
     featured: true,
-    award: { en: "TEKNOFEST Finalist", tr: "TEKNOFEST Finalisti" },
+    award: {
+      en: "TEKNOFEST 2026 · 5th Place",
+      tr: "TEKNOFEST 2026 · 5’incilik"
+    },
     githubUrl: "https://github.com/muratcanbarcin/AI-Supported-Lightweight-C4ISR-Prototype-SINAPS",
     githubSync: {
       enabled: true,
       repo: "muratcanbarcin/AI-Supported-Lightweight-C4ISR-Prototype-SINAPS",
       branch: "Main",
       injectToAI: true,
-      syncArchitectureMedia: true,
-    },
+      syncArchitectureMedia: true
+    }
   },
   {
     id: "sun-group-expense",
@@ -101,58 +116,80 @@ export const projects: readonly Project[] = [
     title: "Expense — AI-Powered B2B Expense SaaS",
     subtitle: {
       en: "Sun Group · AI & Backend Engineering",
-      tr: "Sun Şirketler Grubu · AI & Backend Mühendisliği",
+      tr: "Sun Şirketler Grubu · AI & Backend Mühendisliği"
     },
     topics: [
-      { en: "Document Extraction", tr: "Belge Çıkarımı" },
-      { en: "Approval Workflow", tr: "Onay Akışı" },
-      { en: "SAP Integration", tr: "SAP Entegrasyonu" },
+      {
+        en: "Document Extraction",
+        tr: "Belge Çıkarımı"
+      },
+      {
+        en: "Approval Workflow",
+        tr: "Onay Akışı"
+      },
+      {
+        en: "Integration Readiness",
+        tr: "Entegrasyona Hazırlık"
+      }
     ],
     summary: {
-      en: "An AI document-extraction microservice and Spring Boot approval backend for a B2B expense platform integrated with SAP.",
-      tr: "SAP ile entegre bir B2B masraf platformu için yapay zeka tabanlı belge işleme mikroservisi ve Spring Boot onay altyapısı.",
+      en: "AI receipt and invoice extraction plus multi-level Spring Boot approval workflows, prepared for external systems such as SAP.",
+      tr: "Fiş ve faturalardan AI ile veri çıkarımı ve çok seviyeli Spring Boot onay akışları; SAP gibi harici sistemlere entegrasyona hazırlandı."
     },
     description: {
-      en: 'Engineered an AI microservice (Python, FastAPI) for the "Expense" B2B SaaS that extracts financial data from receipts and invoices, achieving sub-10s processing and a monthly capacity of 1M+ financial documents. Developed the backend architecture and multi-level approval workflows using Java and Spring Boot, completing the system\'s integration with corporate structures such as SAP.',
-      tr: '"Expense" isimli B2B SaaS için fiş ve faturalardan finansal verileri çıkaran yapay zeka mikroservisi (Python, FastAPI) geliştirildi; 10 sn altı işlem süresiyle aylık 1 Milyon+ finansal belge kapasitesi sağlandı. Java ve Spring Boot kullanılarak backend mimarisi ile çok aşamalı onay akışları geliştirildi ve sistemin SAP gibi kurumsal yapılarla entegrasyonu tamamlandı.',
+      en: "Developed the Expense B2B SaaS AI service in Python/FastAPI, averaging under 10 seconds per receipt or invoice in tests with an estimated capacity of 1M+ documents per month. Built Java/Spring Boot backend architecture and multi-level approval workflows, preparing the platform for external integration such as SAP. These figures describe test results and estimated capacity, not measured production throughput.",
+      tr: "Expense B2B SaaS için Python/FastAPI AI servisi geliştirildi; testlerde fiş veya fatura başına ortalama 10 saniyenin altında işlem süresi ve aylık 1M+ belge kapasitesi tahmini elde edildi. Java/Spring Boot backend mimarisi ve çok seviyeli onay akışları geliştirilerek platform SAP gibi harici sistemlerle entegrasyona hazırlandı. Bu rakamlar üretim trafiğini değil, test sonuçlarını ve tahmini kapasiteyi ifade eder."
     },
     keyMetrics: [
-      { en: "Receipt or invoice in under 10 seconds", tr: "Fiş ve fatura 10 saniyenin altında" },
-      { en: "Capacity for over 1 million documents a month", tr: "Ayda 1 milyondan fazla fiş ve fatura kapasitesi" },
-      { en: "Approvals synced to SAP", tr: "Onaylar SAP ile eşitlenir" },
+      {
+        en: "<10s average per document in tests",
+        tr: "Testlerde belge başına ortalama <10 sn"
+      },
+      {
+        en: "Estimated 1M+ documents / month",
+        tr: "Tahmini aylık 1M+ belge kapasitesi"
+      },
+      {
+        en: "Prepared for SAP integration",
+        tr: "SAP entegrasyonuna hazırlandı"
+      }
     ],
-    techStack: ["Python", "FastAPI", "Java", "Spring Boot", "SAP"],
+    techStack: [
+      "Python",
+      "FastAPI",
+      "Java",
+      "Spring Boot"
+    ],
     architectureFlow: [
       {
         step: 1,
         title: "AI Extraction Service",
         description: {
-          en: "Receipts & invoices → structured data in < 10s",
-          tr: "Fiş & fatura → 10 sn altında yapılandırılmış veri",
+          en: "Receipts and invoices become structured data; test average <10s",
+          tr: "Fiş ve faturadan yapılandırılmış veri; test ortalaması <10 sn"
         },
         technology: "Python · FastAPI",
-        inputOutput: "Receipt / invoice → structured expense",
+        inputOutput: "Receipt / invoice → structured expense"
       },
       {
         step: 2,
         title: "Approval Workflow",
         description: {
           en: "Multi-level approval chains",
-          tr: "Çok aşamalı onay zincirleri",
+          tr: "Çok aşamalı onay zincirleri"
         },
         technology: "Java · Spring Boot",
-        inputOutput: "Expense → approved expense",
+        inputOutput: "Expense → approved expense"
       },
       {
         step: 3,
-        title: "ERP Integration",
+        title: "External Integration Readiness",
         description: {
-          en: "Approved records synced to SAP",
-          tr: "Onaylı kayıtlar SAP ile senkronize",
+          en: "Approval backend prepared for external systems such as SAP",
+          tr: "Onay altyapısı SAP gibi harici sistemlere entegrasyona hazırlandı"
         },
-        technology: "SAP",
-        inputOutput: "Approved expense → ERP record",
-      },
+        technology: "Integration boundary"
+      }
     ],
     media: [],
     links: [],
@@ -160,78 +197,105 @@ export const projects: readonly Project[] = [
     featured: true,
     statusBadge: {
       en: "Enterprise B2B SaaS (Sun Group · Proprietary)",
-      tr: "Kurumsal B2B SaaS (Sun Şirketler Grubu · Tescilli)",
+      tr: "Kurumsal B2B SaaS (Sun Şirketler Grubu · Tescilli)"
     },
-    githubSync: { enabled: false },
+    githubSync: {
+      enabled: false
+    }
   },
   {
     id: "enterprise-agent-sso",
     slug: "enterprise-agent-sso",
-    title: "Enterprise Agent for SSO",
+    title: "AI-Assisted Access Control & Anomaly Detection (PoC)",
     subtitle: {
-      en: "AI-Powered Security System",
-      tr: "Yapay Zeka Destekli Güvenlik Sistemi",
+      en: "Policy Rules + Isolation Forest · Local Demo",
+      tr: "Politika Kuralları + Isolation Forest · Yerel Demo"
     },
     topics: [
-      { en: "Risk-Based SSO", tr: "Risk Tabanlı SSO" },
-      { en: "Anomaly Detection", tr: "Anomali Tespiti" },
-      { en: "Access Control", tr: "Erişim Kontrolü" },
+      {
+        en: "Risk Assessment",
+        tr: "Risk Değerlendirmesi"
+      },
+      {
+        en: "Anomaly Detection",
+        tr: "Anomali Tespiti"
+      },
+      {
+        en: "Access Control",
+        tr: "Erişim Kontrolü"
+      }
     ],
     summary: {
-      en: "Risk-based access control that scores SSO requests with anomaly detection and escalates high-risk access automatically.",
-      tr: "SSO isteklerini anomali tespitiyle puanlayan ve yüksek riskli erişimleri otomatik olarak eskale eden risk tabanlı erişim kontrolü.",
+      en: "A local-account proof of concept combining policy rules and Isolation Forest to approve low-risk requests or record pending review.",
+      tr: "Politika kuralları ve Isolation Forest ile düşük riskli talepleri onaylayan veya inceleme bekliyor olarak kaydeden, yerel hesap tabanlı kavram kanıtı."
     },
     description: {
-      en: "Developed a Risk-Based Access Control (RBAC) system using Spring Boot and React, integrating AI to automate secure Single Sign-On approvals. Engineered a Python FastAPI microservice using the Isolation Forest algorithm to detect real-time access anomalies and calculate dynamic risk scores. Integrated n8n workflows to orchestrate automated security escalations for high-risk requests and containerized the architecture using Docker.",
-      tr: "Single Sign-On (SSO) onaylarını otomatikleştirmek için yapay zekayı entegre eden, Spring Boot ve React tabanlı bir Risk Tabanlı Erişim Kontrolü (RBAC) sistemi geliştirildi. Gerçek zamanlı erişim anormalliklerini tespit etmek ve dinamik risk skorlarını hesaplamak için Isolation Forest algoritmasını kullanan bir Python FastAPI mikroservisi tasarlandı. Yüksek riskli istekler için otomatik güvenlik eskalasyon süreçlerini yönetmek amacıyla n8n iş akışları entegre edildi ve mimari Docker ile ayağa kaldırıldı.",
+      en: "Built Spring Boot and FastAPI services combining department/time policies with Isolation Forest trained on synthetic access history. React uses local sign-in, session cookies and CSRF tokens. Requests and audit entries commit atomically to MySQL; high-risk or unavailable assessments remain pending review with optional n8n alerts after commit. SSO, OAuth, identity-provider integration, resource provisioning and reviewer approval are outside the implemented scope.",
+      tr: "Departman/saat politikalarını sentetik erişim geçmişiyle eğitilmiş Isolation Forest ile birleştiren Spring Boot ve FastAPI servisleri geliştirildi. React yerel giriş, oturum çerezleri ve CSRF token kullanır. Talep ve denetim kaydı MySQL’e atomik yazılır; yüksek riskte veya değerlendirme yapılamadığında inceleme beklenir, commit sonrası isteğe bağlı n8n bildirimi gönderilir. SSO, OAuth, kimlik sağlayıcısı entegrasyonu, kaynak yetkilendirme ve inceleyen onayı uygulanmış kapsamın dışındadır."
     },
     keyMetrics: [
-      { en: "Real-time anomaly detection", tr: "Gerçek zamanlı anomali tespiti" },
-      { en: "Dynamic risk scoring", tr: "Dinamik risk puanı" },
-      { en: "Automated escalation", tr: "Otomatik eskalasyon" },
+      {
+        en: "Policy + model risk scoring",
+        tr: "Politika + model risk skoru"
+      },
+      {
+        en: "Atomic request and audit writes",
+        tr: "Atomik talep ve denetim kaydı"
+      },
+      {
+        en: "Pending review on assessment failure",
+        tr: "Değerlendirme hatasında inceleme bekler"
+      }
     ],
-    techStack: ["Java", "Spring Boot", "React", "Python", "FastAPI", "Isolation Forest", "MySQL", "n8n", "Docker"],
+    techStack: [
+      "Java",
+      "Spring Boot",
+      "Spring Security",
+      "React",
+      "Python",
+      "FastAPI",
+      "Isolation Forest",
+      "MySQL",
+      "n8n",
+      "Docker"
+    ],
     architectureFlow: [
       {
         step: 1,
-        title: "Client Request",
+        title: "Local Authentication",
         description: {
-          en: "Access request enters the enterprise agent",
-          tr: "Erişim isteği kurumsal ajana girer",
+          en: "Local accounts, session cookies and CSRF-protected requests",
+          tr: "Yerel hesaplar, oturum çerezleri ve CSRF korumalı talepler"
         },
-        technology: "React",
-        inputOutput: "User → access request",
+        technology: "React · Spring Security"
       },
       {
         step: 2,
-        title: "Enterprise Identity Provider",
+        title: "Risk Assessment",
         description: {
-          en: "Identity asserted before risk evaluation",
-          tr: "Risk değerlendirmesinden önce kimlik doğrulanır",
+          en: "Department/time rules and synthetic-history anomaly detection",
+          tr: "Departman/saat kuralları ve sentetik geçmişte anomali tespiti"
         },
-        technology: "SSO · Spring Boot",
-        inputOutput: "Request → authenticated principal",
+        technology: "FastAPI · Isolation Forest"
       },
       {
         step: 3,
-        title: "RBAC Risk Engine",
+        title: "Decision & Audit",
         description: {
-          en: "Isolation Forest scores the access anomaly",
-          tr: "Isolation Forest erişim anomalisini puanlar",
+          en: "Atomically store approval or pending review and its reason",
+          tr: "Onay veya bekleyen incelemeyi gerekçesiyle atomik kaydeder"
         },
-        technology: "Python · FastAPI · Isolation Forest",
-        inputOutput: "Principal → risk score",
+        technology: "Spring Boot · MySQL"
       },
       {
         step: 4,
-        title: "Automated SSO Session Escalation",
+        title: "Optional Notification",
         description: {
-          en: "High-risk sessions escalate without a manual queue",
-          tr: "Yüksek riskli oturumlar manuel kuyruk olmadan eskale edilir",
+          en: "Attempt a pending-review webhook after commit",
+          tr: "Commit sonrası bekleyen inceleme için webhook bildirimi dener"
         },
-        technology: "n8n · Docker",
-        inputOutput: "High-risk score → escalated session",
-      },
+        technology: "n8n"
+      }
     ],
     media: [],
     links: [],
@@ -243,8 +307,8 @@ export const projects: readonly Project[] = [
       repo: "muratcanbarcin/EnterpriseAgentForSSO",
       branch: "master",
       injectToAI: true,
-      syncArchitectureMedia: true,
-    },
+      syncArchitectureMedia: true
+    }
   },
   {
     id: "sleepflow-ai",
@@ -330,53 +394,74 @@ export const projects: readonly Project[] = [
     slug: "karma",
     title: "Karma",
     subtitle: {
-      en: "Sustainable Accommodation Platform · Incubated at T3 Startup Center",
-      tr: "Sürdürülebilir Konaklama Platformu · T3 Girişim Merkezi Destekli",
+      en: "Sustainable Accommodation Sharing · Academic Prototype",
+      tr: "Sürdürülebilir Konaklama Paylaşımı · Akademik Prototip"
     },
     topics: [
-      { en: "Accommodation Sharing", tr: "Konaklama Paylaşımı" },
-      { en: "Karma Points", tr: "Karma Puanı" },
-      { en: "Booking", tr: "Rezervasyon" },
+      {
+        en: "Accommodation Sharing",
+        tr: "Konaklama Paylaşımı"
+      },
+      {
+        en: "Karma Points",
+        tr: "Karma Puanı"
+      },
+      {
+        en: "Booking",
+        tr: "Rezervasyon"
+      }
     ],
     summary: {
-      en: "A scalable accommodation platform with booking, secure messaging, and a token-based reward system.",
-      tr: "Rezervasyon, güvenli mesajlaşma ve token tabanlı ödül sistemine sahip ölçeklenebilir bir konaklama platformu.",
+      en: "A React/Express accommodation-sharing prototype with listings, bookings and a relational karma-points schema.",
+      tr: "İlan, rezervasyon ve ilişkisel karma puanı şeması içeren React/Express konaklama paylaşım prototipi."
     },
     description: {
-      en: "Architected a scalable accommodation platform using RESTful APIs and a token-based reward system. Engineered core full-stack modules including secure messaging, booking engines, and authentication.",
-      tr: "RESTful API'ler ve token tabanlı bir ödül sistemi kullanılarak ölçeklenebilir bir konaklama platformu tasarlandı. Güvenli mesajlaşma, rezervasyon motorları ve kimlik doğrulama dahil olmak üzere temel full-stack modüller geliştirildi.",
+      en: "Built an academic accommodation-sharing application with React/Vite, Express and MySQL. The repository includes listing and booking routes, local authentication and an ER model for messaging, reviews and point transactions. Karma points represent community exchange, not a blockchain token. Full token integration and other enhancements remain future work; the prototype is not presented as production hardened.",
+      tr: "React/Vite, Express ve MySQL ile akademik konaklama paylaşım uygulaması geliştirildi. Depoda ilan ve rezervasyon uç noktaları, yerel kimlik doğrulama ile mesajlaşma, değerlendirme ve puan işlemlerine ilişkin ER modeli bulunur. Karma puanları topluluk içi değişimi temsil eder; blokzincir token’ı değildir. Tam token entegrasyonu ve diğer geliştirmeler gelecek çalışma kapsamındadır; prototip üretim güvenliği tamamlanmış olarak sunulmaz."
     },
-    keyMetrics: [{ en: "Token-based rewards", tr: "Token tabanlı ödül" }],
-    techStack: ["Node.js", "Express.js", "React", "MySQL", "RESTful APIs"],
+    keyMetrics: [
+      {
+        en: "Relational karma-points design",
+        tr: "İlişkisel karma puanı tasarımı"
+      }
+    ],
+    techStack: [
+      "Node.js",
+      "Express.js",
+      "React",
+      "Vite",
+      "MySQL",
+      "RESTful APIs"
+    ],
     architectureFlow: [
       {
         step: 1,
         title: "Client",
         description: {
-          en: "Discovery, booking & messaging UI",
-          tr: "Keşif, rezervasyon & mesajlaşma arayüzü",
+          en: "Accommodation discovery and booking interface",
+          tr: "Konaklama keşfi ve rezervasyon arayüzü"
         },
-        technology: "React",
+        technology: "React"
       },
       {
         step: 2,
         title: "REST API",
         description: {
-          en: "Auth, bookings, messaging & rewards",
-          tr: "Kimlik, rezervasyon, mesajlaşma & ödüller",
+          en: "Local authentication, listings and booking routes",
+          tr: "Yerel kimlik doğrulama, ilan ve rezervasyon uç noktaları"
         },
         technology: "Node.js · Express.js",
-        inputOutput: "HTTP request → domain operation",
+        inputOutput: "HTTP request → domain operation"
       },
       {
         step: 3,
         title: "Persistence",
         description: {
           en: "Relational store for the core domain",
-          tr: "Temel alan için ilişkisel veri katmanı",
+          tr: "Temel alan için ilişkisel veri katmanı"
         },
-        technology: "MySQL",
-      },
+        technology: "MySQL"
+      }
     ],
     media: [],
     links: [],
@@ -388,7 +473,100 @@ export const projects: readonly Project[] = [
       repo: "muratcanbarcin/Karma-Web-App",
       branch: "master",
       injectToAI: true,
-      syncArchitectureMedia: true,
+      syncArchitectureMedia: true
+    }
+  },
+  {
+    id: "metaverse-financial-analytics",
+    slug: "metaverse-financial-analytics",
+    title: "Metaverse Financial Analytics",
+    subtitle: {
+      en: "Research Prototype · Journal of Metaverse Under Review",
+      tr: "Araştırma Prototipi · Journal of Metaverse İnceleme Aşamasında"
     },
+    topics: [
+      {
+        en: "Financial Anomaly Detection",
+        tr: "Finansal Anomali Tespiti"
+      },
+      {
+        en: "Explainable AI",
+        tr: "Açıklanabilir AI"
+      },
+      {
+        en: "Local GenAI",
+        tr: "Yerel GenAI"
+      }
+    ],
+    summary: {
+      en: "Combines PaySim and Ethereum fraud analysis, SHAP explanations and local Llama forensic reporting.",
+      tr: "PaySim ve Ethereum dolandırıcılık analizini, SHAP açıklamalarını ve yerel Llama adli raporlamayı birleştirir."
+    },
+    description: {
+      en: "A research pipeline comparing Isolation Forest with SMOTE + XGBoost on Web2 PaySim and Web3 Ethereum data. Training-fold-only SMOTE and held-out evaluation support leakage-aware experiments. SHAP explains predictions; local Llama 3.1 8B, QLoRA adapters and a rule-based fallback support forensic reporting in a Streamlit dashboard. The associated manuscript is under review; repository example metrics are not production guarantees.",
+      tr: "Web2 PaySim ve Web3 Ethereum verisinde Isolation Forest ile SMOTE + XGBoost’u karşılaştıran araştırma hattı. SMOTE yalnızca eğitim katında uygulanır; ayrılmış test kümesiyle veri sızıntısı gözetilerek değerlendirme yapılır. SHAP tahminleri açıklar; yerel Llama 3.1 8B, QLoRA adaptörleri ve kural tabanlı yedek yöntem Streamlit panelinde adli raporlamayı destekler. İlgili makale inceleme aşamasındadır; depodaki örnek metrikler üretim garantisi değildir."
+    },
+    keyMetrics: [
+      {
+        en: "Web2 + Web3 analysis",
+        tr: "Web2 + Web3 analizi"
+      },
+      {
+        en: "Under review; not yet published",
+        tr: "İnceleme aşamasında; henüz yayımlanmadı"
+      }
+    ],
+    techStack: [
+      "Python",
+      "SMOTE",
+      "Isolation Forest",
+      "XGBoost",
+      "SHAP",
+      "QLoRA",
+      "Llama 3.1 8B",
+      "Ollama",
+      "Streamlit"
+    ],
+    architectureFlow: [
+      {
+        step: 1,
+        title: "Data Preparation",
+        description: {
+          en: "Prepare PaySim and Ethereum data with leakage-aware features",
+          tr: "PaySim ve Ethereum verisini sızıntı gözeten özelliklerle hazırlar"
+        },
+        technology: "Python"
+      },
+      {
+        step: 2,
+        title: "Detection & Explanation",
+        description: {
+          en: "Compare baseline and supervised models; explain scores",
+          tr: "Temel ve denetimli modelleri karşılaştırır; skorları açıklar"
+        },
+        technology: "Isolation Forest · XGBoost · SHAP"
+      },
+      {
+        step: 3,
+        title: "Forensic Reporting",
+        description: {
+          en: "Local generation with rule-based fallback and dashboard exports",
+          tr: "Kural tabanlı yedek yöntemle yerel üretim ve panel çıktıları"
+        },
+        technology: "Llama 3.1 · QLoRA · Streamlit"
+      }
+    ],
+    media: [],
+    links: [],
+    status: "under-review",
+    featured: false,
+    githubUrl: "https://github.com/muratcanbarcin/metaverse-financial-analytics",
+    githubSync: {
+      enabled: true,
+      repo: "muratcanbarcin/metaverse-financial-analytics",
+      branch: "master",
+      injectToAI: true,
+      syncArchitectureMedia: true
+    }
   },
 ];

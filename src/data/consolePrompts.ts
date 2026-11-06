@@ -5,10 +5,10 @@ export const consolePrompts: readonly PromptChip[] = [
   {
     id: "enterprise-sap",
     kind: "query",
-    label: { en: "Enterprise SAP & Spring Boot Architecture", tr: "Kurumsal SAP & Spring Boot Mimarisi" },
+    label: { en: "Spring Boot & Integration Readiness", tr: "Spring Boot & Entegrasyona Hazırlık" },
     prompt: {
-      en: "How did Murat Can architect the Spring Boot approval workflows and SAP integration for the Expense SaaS at Sun Group?",
-      tr: "Murat Can, Sun Group'taki Expense SaaS için Spring Boot onay akışlarını ve SAP entegrasyonunu nasıl tasarladı?",
+      en: "How did Murat Can architect the Spring Boot approval workflows and prepare for external integration such as SAP for the Expense SaaS at Sun Group?",
+      tr: "Murat Can, Sun Group'taki Expense SaaS için Spring Boot onay akışlarını nasıl geliştirdi ve SAP gibi harici sistemlere entegrasyona nasıl hazırlık yaptı?",
     },
   },
   {
@@ -50,19 +50,19 @@ export const consolePrompts: readonly PromptChip[] = [
   {
     id: "sso-risk-engine",
     kind: "query",
-    label: { en: "Risk-Based SSO Access Control", tr: "Risk Tabanlı SSO Erişim Kontrolü" },
+    label: { en: "AI-Assisted Access Control PoC", tr: "AI Destekli Erişim Kontrolü PoC" },
     prompt: {
-      en: "Explain the Enterprise Agent for SSO: the Isolation Forest risk engine and the automated escalation flow.",
-      tr: "Enterprise Agent for SSO projesini anlat: Isolation Forest risk motoru ve otomatik eskalasyon akışı.",
+      en: "Explain the access-control PoC: policy rules, Isolation Forest, audit logging and pending-review notifications. What remains outside its scope?",
+      tr: "Erişim kontrolü PoC projesini anlat: politika kuralları, Isolation Forest, denetim kayıtları ve inceleme bildirimleri. Hangi özellikler kapsam dışında?",
     },
   },
   {
     id: "expense-ai-throughput",
     kind: "query",
-    label: { en: "1M+ Docs/Month AI Extraction Service", tr: "Aylık 1M+ Belge İşleyen AI Servisi" },
+    label: { en: "AI Extraction: Tests & Estimated Capacity", tr: "AI Belge Çıkarımı: Testler & Tahmini Kapasite" },
     prompt: {
-      en: "How does the FastAPI document-extraction microservice reach sub-10s processing at 1M+ documents per month?",
-      tr: "FastAPI belge işleme mikroservisi aylık 1M+ belgede 10 saniye altı işlem süresine nasıl ulaşıyor?",
+      en: "What were the document-extraction test results, and how does the estimated 1M+ documents/month capacity differ from measured production throughput?",
+      tr: "Belge çıkarımı test sonuçları nelerdi; aylık tahmini 1M+ belge kapasitesi ile ölçülmüş üretim trafiği arasındaki fark nedir?",
     },
   },
   {
@@ -70,8 +70,8 @@ export const consolePrompts: readonly PromptChip[] = [
     kind: "query",
     label: { en: "Availability & Relocation", tr: "Uygunluk & Relokasyon" },
     prompt: {
-      en: "Where is Murat Can based, and is he open to remote work or relocation?",
-      tr: "Murat Can nerede yaşıyor; uzaktan çalışmaya veya relokasyona açık mı?",
+      en: "Where is Murat Can based, and is he open to relocation?",
+      tr: "Murat Can nerede yaşıyor; taşınmaya açık mı?",
     },
   },
   {
