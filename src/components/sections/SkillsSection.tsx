@@ -1,12 +1,15 @@
 "use client";
 
-import { Cpu, Database, Layers, Server, type LucideIcon } from "lucide-react";
+import { CodeXml, Cpu, Database, Layers, Server, type LucideIcon } from "lucide-react";
 import type { SkillGroupIcon } from "@/types";
 import { portfolioData } from "@/data/portfolioData";
 import { useLocale } from "@/hooks/useLocale";
 import { SectionHeader } from "@/components/common/SectionHeader";
+import { skillProjectCopy } from "@/data/skillProjects";
+import { SkillProjectPopover } from "./SkillProjectPopover";
 
 const SKILL_ICONS: Record<SkillGroupIcon, LucideIcon> = {
+  code: CodeXml,
   server: Server,
   cpu: Cpu,
   database: Database,
@@ -26,6 +29,7 @@ export function SkillsSection() {
         title={t("sections.skills")}
         titleId="skills-title"
       />
+      <p className="mb-4 text-sm text-zinc-500">{localize(skillProjectCopy.hint)}</p>
       <ul className="grid gap-px overflow-hidden rounded-xl border border-zinc-800 bg-zinc-800 md:grid-cols-2">
         {portfolioData.skills.map((group, index) => {
           const Icon = SKILL_ICONS[group.icon];
@@ -50,11 +54,8 @@ export function SkillsSection() {
               </div>
               <ul className="flex flex-wrap gap-1.5">
                 {group.skills.map((skill) => (
-                  <li
-                    key={skill}
-                    className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1 font-mono text-[11px] text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100"
-                  >
-                    {skill}
+                  <li key={skill}>
+                    <SkillProjectPopover skill={skill} />
                   </li>
                 ))}
               </ul>
@@ -62,6 +63,14 @@ export function SkillsSection() {
           );
         })}
       </ul>
+      <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-4">
+        <h3 className="text-sm font-medium text-zinc-400">{localize(skillProjectCopy.languages)}</h3>
+        {portfolioData.profile.languages.map((language) => (
+          <p key={language.name.en} className="font-mono text-xs text-zinc-200">
+            {localize(language.name)} <span className="text-emerald-300">{localize(language.level)}</span>
+          </p>
+        ))}
+      </div>
     </section>
   );
 }

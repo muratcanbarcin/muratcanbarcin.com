@@ -84,7 +84,7 @@ Run `node --test tests/security.test.cjs` to check request guards and the isolat
 | Interface copy | `src/locales/tr.ts`, `src/locales/en.ts` |
 
 Add a role, project, or publication by extending the matching array. The tenure summary
-shows the inclusive month total for completed professional roles, without rounding up to years.
+rounds the inclusive month total for completed professional roles up to whole years (16 months → 2 years).
 
 ## How the page is built
 

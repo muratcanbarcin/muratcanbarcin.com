@@ -9,7 +9,7 @@ export interface SocialLink {
 }
 
 /** Semantic icon key; the UI layer owns the mapping to a concrete icon component. */
-export type SkillGroupIcon = "server" | "cpu" | "database" | "layers";
+export type SkillGroupIcon = "code" | "server" | "cpu" | "database" | "layers";
 
 export interface SkillGroup {
   id: string;

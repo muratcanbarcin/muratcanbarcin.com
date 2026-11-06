@@ -8,7 +8,7 @@ import type {
 } from "@/types";
 import { isProfessionalRole } from "@/data/experiences";
 import { portfolioData } from "@/data/portfolioData";
-import { monthsBetweenInclusive } from "@/lib/date";
+import { monthsBetweenInclusive, roundedYearCount } from "@/lib/date";
 import { interpolate, localize } from "@/lib/i18n";
 
 export interface TerminalContext {
@@ -46,7 +46,9 @@ function formatTenure(
     if (!isProfessionalRole(experience) || experience.period.end === "Present") return total;
     return total + (monthsBetweenInclusive(experience.period.start, experience.period.end) ?? 0);
   }, 0);
-  return interpolate(dictionary.common.duration, { count: months });
+  const years = roundedYearCount(months);
+  const template = years === 1 ? dictionary.experience.tenureYear : dictionary.experience.tenureYears;
+  return interpolate(template, { count: years });
 }
 
 export type ResolvedCommand =

@@ -8,7 +8,7 @@ import { portfolioData } from "@/data/portfolioData";
 import { useLocale } from "@/hooks/useLocale";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import { TechTagList } from "@/components/common/TechTag";
-import { formatYearMonth, monthsBetweenInclusive } from "@/lib/date";
+import { formatYearMonth, monthsBetweenInclusive, roundedYearCount } from "@/lib/date";
 import { shortHash } from "@/lib/hash";
 import { cn } from "@/lib/utils";
 
@@ -47,12 +47,13 @@ function ExperienceSummary() {
     if (experience.period.end === "Present") return total;
     return total + (monthsBetweenInclusive(experience.period.start, experience.period.end) ?? 0);
   }, 0);
+  const years = roundedYearCount(months);
 
   return (
     <div className="mb-8 flex w-fit max-w-full items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-900/50 py-3 pr-5 pl-4">
       <span aria-hidden="true" className="h-10 w-1 shrink-0 rounded-full bg-emerald-400" />
       <p className="font-mono text-3xl font-semibold tracking-tight text-zinc-50">
-        {t("common.duration", { count: months })}
+        {t(years === 1 ? "experience.tenureYear" : "experience.tenureYears", { count: years })}
       </p>
       <span aria-hidden="true" className="h-8 w-px bg-zinc-800" />
       <p className="font-mono text-[11px] tracking-wider text-zinc-500 uppercase">{t("experience.tenureLabel")}</p>

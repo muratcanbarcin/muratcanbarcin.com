@@ -18,22 +18,4 @@ export const publications: readonly Publication[] = [
     },
     keyTech: ["SMOTE", "Isolation Forest", "XGBoost", "SHAP", "QLoRA", "Llama 3.1 8B"],
   },
-  {
-    id: "c4isr-edge-fusion",
-    title: "A Polyglot Microservices Architecture for Real-Time Edge Data Fusion in a Lightweight C4ISR Prototype",
-    authors: [
-      { name: "M. C. Barçin" },
-      { name: "Prof. Dr. Semih Utku", academic: true },
-      { name: "Emirhan Güler" },
-      { name: "Sarp Deniz Topaloğlu" },
-    ],
-    journal: "Working manuscript",
-    status: { en: "In Preparation", tr: "Hazırlık Aşamasında" },
-    codeUrl: "https://github.com/muratcanbarcin/AI-Supported-Lightweight-C4ISR-Prototype-SINAPS",
-    abstract: {
-      en: "Manuscript in preparation on SINAPS, the lightweight C4ISR prototype that placed fifth at TEKNOFEST 2026. It describes Java/Spring Boot and Python services combining sensor and simulated telemetry over MQTT/HTTP, geospatial persistence in PostgreSQL/PostGIS, and tactical map visualization.",
-      tr: "TEKNOFEST 2026’da beşinci olan SINAPS hafif C4ISR prototipine ilişkin, hazırlık aşamasındaki çalışma. Sensör ve simülasyon telemetrisini MQTT/HTTP üzerinden birleştiren Java/Spring Boot ve Python servislerini, PostgreSQL/PostGIS coğrafi veri katmanını ve taktik harita görselleştirmesini ele alır.",
-    },
-    keyTech: ["Java", "Spring Boot", "Python", "MQTT", "PostgreSQL/PostGIS", "Data Fusion"],
-  },
 ];
